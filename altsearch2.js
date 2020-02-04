@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name         bing menu 2
+// @name         bing menu 2 - refactored
 // @namespace    http://tampermonkey.net/
-// @version      0.12.24.2020
-// @description  inserts dropdown into bing
+// @version      2020.01.02
+// @description  inserts dropdown into bing and also puts it at the bottom
 // @author       You
-// @include	http://www.bing.com*
-// @include	https://www.bing.com*
+// @include	http://www.bing.com/*
+// @include	https://www.bing.com/*
 // @grant        GM_addStyle
 // ==/UserScript==
 //for bing if the .dropdown is position:relative the menu hides behind the content. taking it out seems not to matter.
@@ -23,24 +23,23 @@ GM_addStyle (".dropbtn {border: none; cursor: pointer; background-color: #fff !i
 var addSearchElement = 'searchListener';
 
     var results = function() {
+      //the match looks for anything after q= and it returns an array so we need the [1]. i am not sure what the (?:\?|&) is for. it tells it not to match that 
         var result = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
-    if (window.location.href.indexOf('#q=') > -1) {
-        result =  window.location.href.match(/#q=[^&]*/gi)[0].substr(3);}
+    //if (window.location.href.indexOf('#q=') > -1) {
+      //  result =  window.location.href.match(/#q=[^&]*/gi)[0].substr(3);}
     return result;
     };
+	
+	
+//the first var results finds the part of the search url after q= I don't know that I need the second one. it finds the thing after #q but I don't know which search engines use that? I think that if I just set results = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1]; then I need to make sure I call "results" NOT results() 
 
 
 
+//so all these are in a function currently but I think it should be fine to pull them out since that is how it is in the old alt search but the old one doesn't declare individual variables. Doing it individually could allow for not putting a link to the site you are already on (so a link to bing wouldn't show up if you were already on bing)
+ 
 
-//so I think i'm going to need to do getelementbyclassname and then append adacenthtml after i do the outerhtml?
-//this creates it in the bing menu before the pipe 
-var bingInsert = function() {
-    console.log(results);
-    var newItem = document.createElement("LI");
-  
-newItem.id = addSearchElement;
-    var googleLink = '<a href =\"https://www.google.com/search?q=' + results() + '\">Google</a>';
-var bingLink = "<a href =\"http://www.bing.com/search?q=" + results() + "\">Bing</a>";
+	var googleLink = '<a href =\"https://www.google.com/search?q=' + results() + '\">Google</a>';
+	var bingLink = "<a href =\"http://www.bing.com/search?q=" + results() + "\">Bing</a>";
     var yahooLink = "<a href =\"http://search.yahoo.com/search?p=" + results() + "\">Yahoo</a>";
     var swagLink = "<a href =\"http://www.swagbucks.com/?f=51&t=w&p=1&q=" + results() + "\">Swagbucks</a>";
     var duckLink = "<a href =\"https://duckduckgo.com/?q=" + results() + "\">DuckDuckGo</a>";
@@ -48,9 +47,18 @@ var bingLink = "<a href =\"http://www.bing.com/search?q=" + results() + "\">Bing
     var twitterLink = "<a href =\"http://twitter.com/search?q=" + results() + "\">Twitter</a>";
     var scholarLink = "<a href =\"http://scholar.google.com/scholar?q=" + results() + "\">Google Scholar</a>";
     var msAcademicLink = "<a href =\"https://academic.microsoft.com/#/search?iq=" + results() + "\">MS Academic</a>";
+    var wikipedia = "<a href =\"https://www.bing.com/search?q=site%3Aen.wikipedia.org+" + results() + "\">Wikipedia</a>";
+	
+	
+	
+var bingInsert = function() {
+    console.log(results);
+    var newItem = document.createElement("LI");
+  
+newItem.id = addSearchElement;
 links = `<div class="dropdown">
 <button class="dropbtn">ALT SEARCH</button>
-<div class="dropdown-content">`+ googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + `</div></div>`;
+<div class="dropdown-content">`+ googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia +`</div></div>`;
 newItem.innerHTML = links;
 
 var newItem2 = newItem.outerHTML;
@@ -58,29 +66,21 @@ var something = document.querySelector(".scopebar_pipe");
 something.insertAdjacentHTML('beforebegin', newItem2);
 };
 
-//i might be able to get this to update by running an update check when you hover over the menu?
-
-
-var watchSearchElement = function() {
-    // Whenever the query changes without changing the window href, our node
-    // is removed, so use a MutationObserver to update and put us back.
-    new MutationObserver(function(mutations) {
-        var len = mutations.length;
-        for (var i = 0; i < len; i++) {
-            // Normally the link bar is removed then added, along 
-            // with search results, so just check additions.
-            if (mutations[i].addedNodes) {
-                if (!document.getElementById(addSearchElement)) {
-                     
-                    bingInsert();
-                }
-                break;
-            }
-        }
-    }).observe(document.body, {'childList': true, 'subtree': true});
-};
-
 bingInsert();
-watchSearchElement();
 
+
+
+if (window.location.host == "www.bing.com") {
+  console.log("bing bottom baby!");
+  var results2 = document.querySelector(".b_pag")
+
+var other = document.createElement('div');
+
+other.setAttribute("id", "altsearch");
+other.setAttribute("style", "width: 1000px; font-size: small; margin: 10px 10px 5px 159px;");
+  bottomLinks = "Try this search on " + googleLink + ", " + bingLink + ", " + yahooLink + ", " + swagLink + ", " + duckLink + ", " + wolfLink + ", " + twitterLink + ", " + scholarLink + ", " + msAcademicLink + ", " + wikipedia;
+  other.innerHTML = bottomLinks;
+//results2.parentNode.insertBefore(other, results2);
+  results2.before(other);
+}
 
