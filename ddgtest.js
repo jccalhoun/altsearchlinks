@@ -3,14 +3,14 @@
 // @namespace   Violentmonkey Scripts
 
 // @grant       none
-// @version     2020.02.01.15.13
+// @version     2020.02.05.17.53
 // @include https://duckduckgo.com/*
 // @include http://duckduckgo.com/*
 // @author      jccalhoun
 // @description 2/1/2020, 3:12:41 PM
 // ==/UserScript==
 //so none of this works yet. 
-var results = document.querySelector("#b_results"); //this puts it at the top
+var results = document.querySelector("#zero_click_wrapper"); //this puts it at the top
 
 var other = document.createElement('div');
 
@@ -48,3 +48,12 @@ other.innerHTML = links;
 //}
 
 results.parentNode.insertBefore(other, results);
+
+//based on DuckDuckGo - Add Google links with current query, change and it puts "google" before the settings
+//instead of var ds = document.getElementById('duckbar_static');
+  //use:
+//  var ds = document.getElementById('duckbar_dropdowns');
+
+//and instead of ds.parentNode.appendChild(link);
+  //my try:
+ // ds.before(link);
