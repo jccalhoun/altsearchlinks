@@ -1,0 +1,28 @@
+// ==UserScript==
+// @name        testing loading time on ddg
+// @namespace   Violentmonkey Scripts
+// @match       https://duckduckgo.com/
+// @grant       none
+// @version     1.0
+// @author      -
+// @description 2/9/2020, 2:03:18 PM
+// ==/UserScript==
+
+var counter = 0;
+console.log(document.getElementById("duckbar_dropdowns"));
+function waitForElement(id, callback){
+    var poops = setInterval(function(){
+      counter++;
+    console.log("Counter is: " + counter);
+        if(document.getElementById(id)){
+            clearInterval(poops);
+          console.log(window.location.href.match(/\?q=[^&]*/gi)[0].substr(3));
+          console.log(document.getElementById("duckbar_dropdowns"));
+            callback();
+        }
+    }, 10);
+}
+
+waitForElement("duckbar_dropdowns", function(){
+    alert("element is loaded.. do stuff");
+});
