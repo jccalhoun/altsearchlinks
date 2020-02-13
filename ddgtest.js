@@ -12,6 +12,49 @@
 //so none of this works yet. 
 var results = document.querySelector("#zero_click_wrapper"); //this puts it at the top
 
+//drop down stuff
+var ddgResults = document.getElementById('duckbar_dropdowns');
+//window.location.search returns null for some reason
+var ddgSearchTerms = function() {
+var ddgResult = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
+//  this also errors
+//  var ddgResult = window.location.href.match(/\?q=[^&]*/gi)[0].substr(3);
+  return ddgResult;
+};
+
+var addSearchElement = 'searchListener';
+
+	var googleLink = '<a href =\"https://www.google.com/search?q=' + ddgSearchTerms() + '\">Google</a>';
+	var bingLink = "<a href =\"http://www.bing.com/search?q=" + ddgSearchTerms() + "\">Bing</a>";
+    var yahooLink = "<a href =\"http://search.yahoo.com/search?p=" + ddgSearchTerms() + "\">Yahoo</a>";
+    var swagLink = "<a href =\"http://www.swagbucks.com/?f=51&t=w&p=1&q=" + ddgSearchTerms() + "\">Swagbucks</a>";
+    var duckLink = "<a href =\"https://duckduckgo.com/?q=" + ddgSearchTerms() + "\">DuckDuckGo</a>";
+    var wolfLink = "<a href =\"http://www.wolframalpha.com/input/?i=" + ddgSearchTerms()+ "\">WolframAlpha</a>";
+    var twitterLink = "<a href =\"http://twitter.com/search?q=" + ddgSearchTerms() + "\">Twitter</a>";
+    var scholarLink = "<a href =\"http://scholar.google.com/scholar?q=" + ddgSearchTerms() + "\">Google Scholar</a>";
+    var msAcademicLink = "<a href =\"https://academic.microsoft.com/#/search?iq=" + ddgSearchTerms() + "\">MS Academic</a>";
+    var wikipedia = "<a href =\"https://www.bing.com/search?q=site%3Aen.wikipedia.org+" + ddgSearchTerms() + "\">Wikipedia</a>";
+	
+	
+	
+var ddgInsert = function() {
+    console.log(ddgSearchTerms());
+    var newItem = document.createElement("LI");
+  
+newItem.id = addSearchElement;
+links = `<div class="dropdown">
+<button class="dropbtn">ALT SEARCH</button>
+<div class="dropdown-content">`+ googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia +`</div></div>`;
+newItem.innerHTML = links;
+
+var newItem2 = newItem.outerHTML;
+  ddgResults.insertAdjacentHTML('beforebegin', newItem2);
+  };
+
+ddgInsert();
+
+//end of drop down stuff
+
 var other = document.createElement('div');
 
 other.setAttribute("id", "altsearch");
