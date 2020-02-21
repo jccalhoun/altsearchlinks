@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name	altsearch links
 // @description	Adds search on other sites for google, bing, and yahoo
-// @version	0.1.6
+// @version	2020.02.20
 // @include	http://www.google.com*
 // @include	https://*.google.com*
 // @include	http://www.google.com*
@@ -30,7 +30,7 @@
 
 
 
-var PLACEHOLDER_SELECTORS = '#resultStats, #b_results, .b-wordstat__text, .searchresults b, #ext_link, #sidebar, .b-global-wrapper, #gs_ab, #left, #zero_click_wrapper, bing-summary, .bing-summary, #bing-summary';
+var PLACEHOLDER_SELECTORS = '#resultStats, #b_results, .b-wordstat__text, .searchresults b, #ext_link, #sidebar, .b-global-wrapper, #gs_ab, #left, #zero_click_wrapper, bing-summary, .bing-summary, #bing-summary, #ucs';
 var results = document.querySelector(PLACEHOLDER_SELECTORS);
 var other = document.createElement('div');
 
@@ -39,10 +39,19 @@ other.setAttribute("style", "width: 1000px; font-size: small; margin: 10px 10px 
 
 if (window.location.href.indexOf("?query=") > -1) {
     query = window.location.href.match(/\?query=[^&]*/gi)[0].substr(7);
+  
 } else if (window.location.href.indexOf("?q=") > -1) {
+  
     query = window.location.href.match(/\?q=[^&]*/gi)[0].substr(3);
+  
+} else if (window.location.href.indexOf("&q=") > -1 ) {
+  
+query = window.location.href.match(/\&q=[^&]*/gi)[0].substr(3);
+
 } else {
-    query = window.location.href.match(/\?p=[^&]*/gi)[0].substr(3);}
+    query = window.location.href.match(/\?p=[^&]*/gi)[0].substr(3);
+}
+
 query = query.replace(/\+filterui%3[^&^+]*/gi,"");
 links = "Try this search on " +
     "<a href =\"https://www.google.com/search?q=" + query + "\">Google</a>, " +
@@ -60,7 +69,9 @@ if (window.location.host == "www.bing.com") {
 console.log("bing baby!");
 var bingBottomResults = document.querySelector(".b_pag");
 var other2 = other.cloneNode(true);
-bingBottomResults.parentNode.insertBefore(other2, bingBottomResults);
+//bingBottomResults.parentNode.insertBefore(other2, bingBottomResults);
+  bingBottomResults.before(other2);
 }
 
-results.parentNode.insertBefore(other, results);
+//results.parentNode.insertBefore(other, results); //this is old way next line is new way https://gomakethings.com/how-to-insert-an-element-before-another-one-in-the-dom-with-vanilla-javascript/
+results.before(other);
