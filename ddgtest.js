@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://duckduckgo.com/
 // @grant       none
-// @version     2020.02.23
+// @version     2020.02.24
 // @author      -
 // @description 2/23/2020, 4:40:41 PM
 // @grant        GM_addStyle
@@ -20,7 +20,10 @@ GM_addStyle (".sDropbtn {border: none; cursor: pointer; background-color: #fff !
 ".sDropdown:hover .sDropdown-content {    display: block;}"+
 
 ".sDropdown:hover .sDropbtn {    background-color: #3e8e41;}"+
-            ".zcm-wrap {position: static !important;}");
+            ".zcm-wrap {position: static !important;}"+
+             //this li stype is necessary for ddg
+             "li {list-style-type: none;}"
+            );
 
 
 //so i need to put ddgInsert into the wait function
@@ -71,7 +74,7 @@ var addSearchElement = 'searchListener';
 	//on bing I am putting it inside a ul so i create a li. here there is no ul so if i use li it creates it with a bullet point. but if i change it to ul it moves. so maybe leave it at li with list-style-type: none
 var ddgInsert = function() {
     console.log(ddgSearchTerms());
-    var newItem = document.createElement("ul");
+    var newItem = document.createElement("li");
   
 newItem.id = addSearchElement;
 links = `<div class="sDropdown">
@@ -90,13 +93,3 @@ var newItem2 = newItem.outerHTML;
 });
 
 //so does all this need to be in the function??
-results.parentNode.insertBefore(other, results);
-
-//based on DuckDuckGo - Add Google links with current query, change and it puts "google" before the settings
-//instead of var ds = document.getElementById('duckbar_static');
-  //use:
-//  var ds = document.getElementById('duckbar_dropdowns');
-
-//and instead of ds.parentNode.appendChild(link);
-  //my try:
- // ds.before(link);
