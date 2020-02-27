@@ -3,13 +3,13 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://duckduckgo.com/
 // @grant       none
-// @version     2020.02.24
+// @version     2020.02.26
 // @author      -
-// @description 2/23/2020, 4:40:41 PM
+// @description 2/26/2020, 10:07:41 PM
 // @grant        GM_addStyle
 // ==/UserScript==
 //so this puts it behind the content and I can't figure out how to fix it. .zcm-wrap position:relative breaks it. changing that to static fixes it. 
-GM_addStyle (".sDropbtn {border: none; cursor: pointer; background-color: #fff !important; color: #666666; font-size: 11px !important; line-height: 30px !important;}" +
+GM_addStyle (".sDropbtn {border: none; cursor: pointer; background-color: #fafafa;}" +
             ".sDropdown {display: inline-block;}" +
     ".sDropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1;}" +
    ".sDropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; display: block;}" +
@@ -19,7 +19,7 @@ GM_addStyle (".sDropbtn {border: none; cursor: pointer; background-color: #fff !
 
 ".sDropdown:hover .sDropdown-content {    display: block;}"+
 
-".sDropdown:hover .sDropbtn {    background-color: #3e8e41;}"+
+".sDropdown:hover .sDropbtn {    background-color: #fafafa;}"+
             ".zcm-wrap {position: static !important;}"+
              //this li stype is necessary for ddg
              "li {list-style-type: none;}"
@@ -78,7 +78,7 @@ var ddgInsert = function() {
   
 newItem.id = addSearchElement;
 links = `<div class="sDropdown">
-<button class="sDropbtn">ALT SEARCH</button>
+<button class="sDropbtn zcm__link  js-zci-link">Alt Search</button>
 <div class="sDropdown-content">`+ googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia +`</div></div>`;
 newItem.innerHTML = links;
 
