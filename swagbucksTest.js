@@ -3,11 +3,12 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.swagbucks.com/
 // @grant       GM_addStyle
-// @version     2020.02.29
+// @version     2020.03.04
 // @author      -
 // @description 2/16/2020, 6:13:41 PM
 // ==/UserScript==
-GM_addStyle (".dropbtn {border: none; cursor: pointer; background-color: #fff !important; color: #666666; font-size: 11px !important; line-height: 30px !important;}" +
+GM_addStyle (".dropbtn {border: none; cursor: pointer; background-color: #fff !important; color: #666666;}" +
+             
              ".dropdown {display: inline-block;}" +
     ".dropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1; max-width: 133px;}" +
    ".dropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; display: block;}" +
@@ -17,7 +18,7 @@ GM_addStyle (".dropbtn {border: none; cursor: pointer; background-color: #fff !i
 
 ".dropdown:hover .dropdown-content {    display: block;}"+
 
-".dropdown:hover .dropbtn {    background-color: #3e8e41;}");
+".dropdown:hover .dropbtn {    color: #2d6cae;}");
 
 //max-width keeps it from putting multiple items in a line. but it doesn't highlight the entire line like it does on other sites. is that a css thing? 
 var addSearchElement = 'searchListener';
@@ -49,7 +50,7 @@ var swagInsert = function() {
   
 newItem.id = addSearchElement;
 links = `<div class="dropdown">
-<button class="dropbtn">ALT SEARCH</button>
+<button class="dropbtn">Alt Search</button>
 <div class="dropdown-content">`+ googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia +`</div></div>`;
 newItem.innerHTML = links;
 
