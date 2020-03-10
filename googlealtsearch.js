@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         google alt search
 // @namespace    http://tampermonkey.net/
-// @version      2020-03-08
+// @version      2020-03-10
 // @description  Add alt search to google
 // @author       You
 // @include	http://www.google.com*
@@ -13,9 +13,10 @@
 // ==/UserScript==
 //modified by me. see if it is compatiable with existing stuff by me. 
 //based on https://greasyfork.org/en/scripts/9496-scholar-on-google-search 
-GM_addStyle (".dropbtn {border: none; cursor: pointer; background-color: #fafafa !important; color: #666666; font-family: 'Roboto'; line-height:15px;}" +
+GM_addStyle (".dropbtn {border: none; cursor: pointer; background-color: #ffffff !important; color: #5f6368; font-family: 'Roboto'; line-height:15px; font-size: 13px;}" +
+             ".dropbtn:hover {color: #1A73E8}" +
              ".dropdown {position: relative; display: inline-block;}" +
-    ".dropdown-content {display: none; position: absolute; z-index: 1;}" +
+    ".dropdown-content {display: none; position: absolute; z-index: 1; background-color: #ffffff !important;}" +
    ".dropdown-content a {color: black; padding: 12px 16px !important; text-decoration: none; display: block  !important;}" +
              ".dropdown:hover .dropdown-content {display: block;}");
 var scholarEleId = 'hdtb-us-scholar'; //when I genericize this I will need to make this a generic lable
