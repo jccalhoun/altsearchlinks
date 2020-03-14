@@ -7,6 +7,7 @@
 // @author      -
 // @description 2/16/2020, 6:13:41 PM
 // ==/UserScript==
+//this works in tampermonkey but not in violentmonkey
 GM_addStyle(".dropbtn {border: none; cursor: pointer; background-color: #fff !important; color: #666666; font-family: 'Open Sans',sans-serif; font-size: 1.4em;}" +
 
     ".dropdown {display: inline-block;}" +
