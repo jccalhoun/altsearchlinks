@@ -2,12 +2,14 @@
 // @name        Swagbucks insert element test
 // @namespace   Violentmonkey Scripts
 // @match       *.swagbucks.com/*
+// @match https://*.swagbucks.com/*
+// @match http://*.swagbucks.com/*
 // @grant       GM_addStyle
 // @version     2020.03.14
 // @author      -
 // @description 2/16/2020, 6:13:41 PM
 // ==/UserScript==
-//this works in tampermonkey but not in violentmonkey
+//this works in tampermonkey but not in violentmonkey --ok it seems to work with http before the match wildcard?
 GM_addStyle(".dropbtn {border: none; cursor: pointer; background-color: #fff !important; color: #666666; font-family: 'Open Sans',sans-serif; font-size: 1.4em;}" +
 
     ".dropdown {display: inline-block;}" +
