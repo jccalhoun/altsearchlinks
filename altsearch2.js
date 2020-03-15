@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bing menu 2 - refactored
 // @namespace    http://tampermonkey.net/
-// @version      2020.03.14b
+// @version      2020.03.15
 // @description  inserts dropdown into bing and also puts it at the bottom
 // @author       You
 // @include	http://www.bing.com/*
@@ -10,13 +10,35 @@
 // ==/UserScript==
 //for bing if the .dropdown is position:relative the menu hides behind the content. taking it out seems not to matter.
 //this is from https://www.w3schools.com/Css/css_dropdowns.asp
+/*
+From w3schools:
+    The .dropdown class uses position:relative, which is needed when we want the dropdown content to be placed right below the dropdown button (using position:absolute).
+
+    The .dropdown-content class holds the actual dropdown content. It is hidden by default, and will be displayed on hover (see below). Note the min-width is set to 160px. Feel free to change this. Tip: If you want the width of the dropdown content to be as wide as the dropdown button, set the width to 100% (and overflow:auto to enable scroll on small screens).
+
+    Instead of using a border, we have used the CSS box-shadow property to make the dropdown menu look like a "card".
+
+    The :hover selector is used to show the dropdown menu when the user moves the mouse over the dropdown button.
+*/
+/*
+.dropbtn:           border: none; hides the button box
+                    cursor: pointer; makes the cursor into a pointer to indicate it is a link
+.dropdown           display: inline-block; at least on bing, toggling this doesn't seem to do anything
+.dropdown-content   position: absolute; without this the dropdown hides behind the content
+.dropdown-content a display: block; makes the links in a column
+.dropdown-content a:hover 
+                    background-color: #f2f2f2; shades the background of the line when hovering over it
+.dropdown:hover .dropbtn 
+                    background-color: #3e8e41; this is meant to change the background color when hovering over the text but it doesn't seem to work on bing
+*/
+
 GM_addStyle(".dropbtn {border: none; cursor: pointer; background-color: #fff !important; color: #666666; font-size: 11px !important; line-height: 30px !important;}" +
     ".dropdown {display: inline-block;}" +
     ".dropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1; box-shadow: 0 3px 5px rgba(0,0,0,0.19), 0 1px 1px rgba(0,0,0,0.23)}" +
-    ".dropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; display: block;}" +
+    ".dropdown-content a {color: #666; padding: 12px 16px !important; text-decoration: none; display: block;}" +
     ".dropdown:hover .dropdown-content {display: block;}" +
 
-    ".dropdown-content a:hover {background-color: #f2f2f2}" +
+    ".dropdown-content a:hover {background-color: #f2f2f2;}" +
 
     ".dropdown:hover .dropdown-content {    display: block;}" +
 
