@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bing menu 2 - refactored
 // @namespace    http://tampermonkey.net/
-// @version      2020.03.15
+// @version      2020.03.17
 // @description  inserts dropdown into bing and also puts it at the bottom
 // @author       You
 // @include	http://www.bing.com/*
@@ -48,9 +48,7 @@ var addSearchElement = 'searchListener';
 var results = function () {
     //the match looks for anything after q= and it returns an array so we need the [1]. i am not sure what the (?:\?|&) is for. it tells it not to match that 
     var result = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
-    //if (window.location.href.indexOf('#q=') > -1) {
-    //  result =  window.location.href.match(/#q=[^&]*/gi)[0].substr(3);}
-    return result;
+       return result;
 };
 
 
@@ -75,7 +73,7 @@ var wikipedia = "<a href =\"https://www.bing.com/search?q=site%3Aen.wikipedia.or
 
 
 var bingInsert = function () {
-    console.log(results);
+   // console.log(results);
     var newItem = document.createElement("li");
 
     newItem.id = addSearchElement;
@@ -83,14 +81,7 @@ var bingInsert = function () {
 <button class="dropbtn">ALT SEARCH</button>
 <div class="dropdown-content">` + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + `</div></div>`;
     newItem.innerHTML = links;
-
-    //var newItem2 = newItem.outerHTML;
-    //bing updated to remove scopebar_pipe
-    //var something = document.querySelector(".scopebar_pipe");
     var something = document.querySelector('.b_scopebar li:nth-child(6)');
-    //something.insertAdjacentHTML('beforebegin', newItem2);
-    //so something.after(newItem2) results in the < being interpreted as less than &lt but it works with newItem. so do I need the outerHTML at all???
-    //something.after(newItem2);
     something.after(newItem);
 };
 
@@ -108,6 +99,6 @@ if (window.location.host == "www.bing.com") {
     other.setAttribute("style", "width: 1000px; font-size: small; margin: 10px 10px 5px 159px;");
     var bottomLinks = "Try this search on " + googleLink + ", " + bingLink + ", " + yahooLink + ", " + swagLink + ", " + duckLink + ", " + wolfLink + ", " + twitterLink + ", " + scholarLink + ", " + msAcademicLink + ", " + wikipedia;
     other.innerHTML = bottomLinks;
-    //results2.parentNode.insertBefore(other, results2);
+    
     results2.before(other);
 }
