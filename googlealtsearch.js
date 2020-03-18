@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         google alt search
 // @namespace    http://tampermonkey.net/
-// @version      2020-03-10
+// @version      2020-03-18
 // @description  Add alt search to google
 // @author       You
 // @include	http://www.google.com*
@@ -13,7 +13,7 @@
 // ==/UserScript==
 //modified by me. see if it is compatiable with existing stuff by me. 
 //based on https://greasyfork.org/en/scripts/9496-scholar-on-google-search 
-GM_addStyle (".dropbtn {border: none; cursor: pointer; background-color: #ffffff !important; color: #5f6368; font-family: 'Roboto'; line-height:15px; font-size: 13px;}" +
+GM_addStyle (".dropbtn {border: none; cursor: pointer; background-color: #ffffff !important; color: #5f6368; font-family: 'Roboto'; line-height:16px; font-size: 13px;}" +
              ".dropbtn:hover {color: #1A73E8}" +
              ".dropdown {position: relative; display: inline-block;}" +
     ".dropdown-content {display: none; position: absolute; z-index: 1; background-color: #ffffff !important;}" +
@@ -47,7 +47,7 @@ var scholarBeforeMore = function() {
     var msAcademicLink = "<a href =\"https://academic.microsoft.com/#/search?iq=" + results() + "\">MS Academic</a>";
     //this next part is the dropdown from https://www.w3schools.com/howto/howto_css_dropdown.asp
     document.getElementById('hdtb-us-scholar').insertAdjacentHTML('afterbegin', `<div class="dropdown">
-<button class="dropbtn">Alt Search</button>
+<button class="dropbtn"><img alt="" width="16" height="16"src="data:image/svg+xml;base64,PHN2ZyBmb2N1c2FibGU9ImZhbHNlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0E2LjQ3MSA2LjQ3MSAwIDAgMCAxNiA5LjUgNi41IDYuNSAwIDEgMCA5LjUgMTZjMS42MSAwIDMuMDktLjU5IDQuMjMtMS41N2wuMjcuMjh2Ljc5bDUgNC45OUwyMC40OSAxOWwtNC45OS01em0tNiAwQzcuMDEgMTQgNSAxMS45OSA1IDkuNVM3LjAxIDUgOS41IDUgMTQgNy4wMSAxNCA5LjUgMTEuOTkgMTQgOS41IDE0eiIvPjwvc3ZnPg==" />Alt Search</button>
 <div class="dropdown-content _dMq">`+ googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + `</div></div>`);
 };
 
