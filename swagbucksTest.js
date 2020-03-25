@@ -4,26 +4,27 @@
 // @match       *.swagbucks.com/*
 // @match https://*.swagbucks.com/*
 // @match http://*.swagbucks.com/*
+
 // @grant       GM_addStyle
-// @version     2020.03.14
+// @version     2020.03.25
 // @author      -
 // @description 2/16/2020, 6:13:41 PM
 // ==/UserScript==
-//this works in tampermonkey but not in violentmonkey --ok it seems to work with http before the match wildcard?
 GM_addStyle(".dropbtn {border: none; cursor: pointer; background-color: #fff !important; color: #666666; font-family: 'Open Sans',sans-serif; font-size: 1.4em;}" +
 
     ".dropdown {display: inline-block;}" +
-    ".dropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1; max-width: 133px;}" +
-    ".dropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; display: block;}" +
+    ".dropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1;}" +
+            //.dropdown-content a needs !important on display:block for it to display in a vertical menu.
+    ".dropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; display: block !important;}" +
     ".dropdown:hover .dropdown-content {display: block;}" +
 
     ".dropdown-content a:hover {background-color: #f2f2f2}" +
 
-    ".dropdown:hover .dropdown-content {    display: block;}" +
+    ".dropdown:hover .dropdown-content { display: block;}" +
 
     ".dropdown:hover .dropbtn {    color: #2d6cae;}");
 
-//max-width keeps it from putting multiple items in a line. but it doesn't highlight the entire line like it does on other sites. is that a css thing?
+
 var addSearchElement = 'searchListener';
 
 var results = function () {
