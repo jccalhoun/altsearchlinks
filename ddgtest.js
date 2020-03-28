@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 
 // @match           *://duckduckgo.com/*
-// @version     2020.02.28
+// @version     2020.03.28
 // @author      -
 // @description 2/26/2020, 10:07:41 PM
 // @grant        GM_addStyle
