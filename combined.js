@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         combined
 // @namespace    http://tampermonkey.net/
-// @version      2020.03.28
+// @version      2020.03.30
 // @description  altsearchrefactored
 // @author       You
 // @include	http://www.bing.com/*
 // @include	https://www.bing.com/*
 // @match           *://duckduckgo.com/*
+// @run-at document-idle
 // @grant        GM_addStyle
 // ==/UserScript==
 //for bing if the .dropdown is position:relative the menu hides behind the content. taking it out seems not to matter.
@@ -20,9 +21,21 @@ GM_addStyle (".dropbtn {border: none; cursor: pointer;}" +
     ".dropdown:hover .dropdown-content {display: block;}" +
     ".dropdown-content a:hover {background-color: #f2f2f2}" +
     ".dropdown:hover .dropdown-content {display: block;}" );
+// from http://greasemonkey.win-start.de/patterns/add-css.html
+function addSiteStyle(css) {
+    var head, style;
+    head = document.getElementsByTagName('head')[0];
+    if (!head) { return; }
+    style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = css;
+    head.appendChild(style);
+}
+
 //unique to bing:
-GM_addStyle(".dropbtn {background-color: #fff !important; color: #666666; font-size: 11px !important; line-height: 30px !important;}"+
-    ".dropdown:hover .dropbtn {background-color: #3e8e41;}")
+addSiteStyle(".dropbtn {background-color: #fff !important; font-family: Arial, Helvetica, sans-serif; color: #444444; font-size: 11px !important; line-height: 30px !important;}"+
+    ".dropdown:hover .dropbtn {background-color: #3e8e41;}");
+
 var addSearchElement = 'searchListener';
 
 var results = function () {
