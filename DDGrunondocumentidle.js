@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match           *://duckduckgo.com/*
 // @grant       none
-// @version     1.0
+// @version     2020.04.01
 // @author      -
 // @description 3/28/2020, 4:40:57 PM
 // @run-at document-idle
@@ -11,18 +11,20 @@
 // ==/UserScript==
 GM_addStyle (".sDropbtn {border: none; cursor: pointer; background-color: #fafafa; font-family: inherit;}" +
     ".sDropdown {display: inline-block;}" +
-    ".sDropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1;}" +
+    ".sDropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1; box-shadow: 0 3px 5px rgba(0,0,0,0.19), 0 1px 1px rgba(0,0,0,0.23)}" +
     ".sDropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; display: block;}" +
     ".sDropdown:hover .sDropdown-content {display: block;}" +
     ".sDropdown-content a:hover {background-color: #f2f2f2}" +
     ".sDropdown:hover .sDropdown-content {display: block;}" +
-    ".sDropdown:hover .sDropbtn {background-color: #fafafa;}" +
+    //this next one doesn't seem to do anything?
+       //      ".sDropdown:hover .sDropbtn {background-color: #fafafa;}" +
+             //needed on ddg
     ".zcm-wrap {position: static !important;}" +
     //this li stype is necessary for ddg
     "li {list-style-type: none;}"
 );
 
-console.log(document.getElementById("duckbar_dropdowns"));
+console.log(document.querySelector('#duckbar_dropdowns'));
 //document.getElementById("duckbar_dropdowns").addEventListener("load", myAlert);
 //function myAlert() {
 //  console.log("hello butts");
@@ -35,7 +37,7 @@ console.log(document.getElementById("duckbar_dropdowns"));
 //may also be able to use run-at document-idle https://violentmonkey.github.io/api/metadata-block/
 
 //yes! that works! 
-var ddgResults = document.getElementById('duckbar_dropdowns');
+var ddgResults = document.querySelector('#duckbar_dropdowns');
     //window.location.search returns null for some reason
     var ddgSearchTerms = function () {
         var ddgResult = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
