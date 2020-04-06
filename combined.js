@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         combined
 // @namespace    http://tampermonkey.net/
-// @version      2020.03.31
+// @version      2020.04.06
 // @description  altsearchrefactored
 // @author       You
 // @include	http://www.bing.com/*
@@ -14,27 +14,40 @@
 //this is from https://www.w3schools.com/Css/css_dropdowns.asp
 //universal styles:
 //box-shadow has only been tested on bing though
-GM_addStyle (".dropbtn {border: none; cursor: pointer;}" +
+GM_addStyle(".dropbtn {border: none; cursor: pointer;}" +
     ".dropdown {display: inline-block;}" +
     ".dropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1; box-shadow: 0 3px 5px rgba(0,0,0,0.19), 0 1px 1px rgba(0,0,0,0.23)}" +
     ".dropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; display: block;}" +
     ".dropdown:hover .dropdown-content {display: block;}" +
     ".dropdown-content a:hover {background-color: #f2f2f2}" +
-    ".dropdown:hover .dropdown-content {display: block;}" );
+    ".dropdown:hover .dropdown-content {display: block;}");
 // from http://greasemonkey.win-start.de/patterns/add-css.html
 function addSiteStyle(css) {
     var head, style;
     head = document.getElementsByTagName('head')[0];
-    if (!head) { return; }
+    if (!head) {
+        return;
+    }
     style = document.createElement('style');
     style.type = 'text/css';
     style.innerHTML = css;
     head.appendChild(style);
 }
-
+var siteURL = window.location.hostname;
 //unique to bing:
-addSiteStyle(".dropbtn {background-color: #fff !important; font-family: Arial, Helvetica, sans-serif; color: #444444; font-size: 11px !important; line-height: 30px !important;}"+
-    ".dropdown:hover .dropbtn {background-color: #3e8e41;}");
+/*addSiteStyle(".dropbtn {background-color: #fff !important; font-family: Arial, Helvetica, sans-serif; color: #444444; font-size: 11px !important; line-height: 30px !important;}"+
+    ".dropdown:hover .dropbtn {background-color: #3e8e41;}"); */
+
+switch (siteURL) {
+    case "www.bing.com":
+        addSiteStyle(".dropbtn {background-color: #fff !important; font-family: Arial, Helvetica, sans-serif; color: #444444; font-size: 11px !important; line-height: 30px !important;}" + ".dropdown:hover .dropbtn {background-color: #3e8e41;}");
+        console.log("switch works");
+        break;
+    case "duckduckgo.com":
+        addSiteStyle(".zcm-wrap {position: static !important;}" + "li {list-style-type: none;}");
+        break;
+}
+
 
 /* I will probably need to use something like the original alt search to get it to find the correct selector: //placeholder selector lists the different elements that the different sites have that i want to put stuff after. then the document.querySelector cycles through them until it fins the first match https://www.w3schools.com/jsref/met_document_queryselector.asp
 
@@ -45,12 +58,12 @@ var results = document.querySelector(PLACEHOLDER_SELECTORS); */
 var addSearchElement = 'searchListener';
 
 var results = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
-    //function () {
-    //the match looks for anything after q= and it returns an array so we need the [1]. i am not sure what the (?:\?|&) is for. it tells it not to match that 
-    //var result = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
-    //if (window.location.href.indexOf('#q=') > -1) {
-    //  result =  window.location.href.match(/#q=[^&]*/gi)[0].substr(3);}
-   //return result;
+//function () {
+//the match looks for anything after q= and it returns an array so we need the [1]. i am not sure what the (?:\?|&) is for. it tells it not to match that 
+//var result = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
+//if (window.location.href.indexOf('#q=') > -1) {
+//  result =  window.location.href.match(/#q=[^&]*/gi)[0].substr(3);}
+//return result;
 //};
 
 
