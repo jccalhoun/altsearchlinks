@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         combined
 // @namespace    http://tampermonkey.net/
-// @version      2020.04.06
+// @version      2020.04.07
 // @description  altsearchrefactored
 // @author       You
 // @include	http://www.bing.com/*
