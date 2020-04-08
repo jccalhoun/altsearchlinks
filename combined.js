@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         combined
 // @namespace    http://tampermonkey.net/
-// @version      2020.04.07
+// @version      2020.04.08
 // @description  altsearchrefactored
 // @author       You
 // @include	http://www.bing.com/*
@@ -13,7 +13,7 @@
 //for bing if the .dropdown is position:relative the menu hides behind the content. taking it out seems not to matter.
 //this is from https://www.w3schools.com/Css/css_dropdowns.asp
 //universal styles:
-//box-shadow has only been tested on bing though
+
 GM_addStyle(".dropbtn {border: none; cursor: pointer;}" +
     ".dropdown {display: inline-block;}" +
     ".dropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1; box-shadow: 0 3px 5px rgba(0,0,0,0.19), 0 1px 1px rgba(0,0,0,0.23)}" +
@@ -40,12 +40,14 @@ var siteURL = window.location.hostname;
 var selectorGetter;
 switch (siteURL) {
     case "www.bing.com":
-        addSiteStyle(".dropbtn {background-color: #fff !important; font-family: Arial, Helvetica, sans-serif; color: #444444; font-size: 11px !important; line-height: 30px !important;}" + ".dropdown:hover .dropbtn {background-color: #3e8e41;}");
+        addSiteStyle(".dropbtn {background-color: #fff !important; font-family: Arial, Helvetica, sans-serif; color: #444444; font-size: 11px !important; line-height: 30px !important; text-transform: uppercase;}" + ".dropdown:hover .dropbtn {background-color: #3e8e41;}");
         console.log("switch works");
         selectorGetter = document.querySelector('.b_scopebar li:nth-child(6)');
+        //console.log(selectorGetter);
         break;
     case "duckduckgo.com":
-        addSiteStyle(".zcm-wrap {position: static !important;}" + "li {list-style-type: none;}");
+        addSiteStyle(".zcm-wrap {position: static !important;}" + "li {list-style-type: none;}" + ".dropbtn {font-size: 14.4px; color: #666666; background-color: #fafafa; font-family: inherit; line-height: 37px; font-weight: 600; }" + ".dropbtn:hover {color:#333333;}" + ".dropdown {position:static !important;}");
+        selectorGetter = document.querySelector('#duckbar_new');
         break;
 }
 
@@ -93,17 +95,18 @@ var bingInsert = function () {
     var newItem = document.createElement("li");
 
     newItem.id = addSearchElement;
-    var links = '<div class="dropdown"> <button class="dropbtn">ALT SEARCH</button> <div class="dropdown-content">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + '</div></div>';
+    var links = '<div class="dropdown"> <button class="dropbtn">Alt Search</button> <div class="dropdown-content">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + '</div></div>';
     newItem.innerHTML = links;
 
     //var newItem2 = newItem.outerHTML;
     //bing updated to remove scopebar_pipe
     //var something = document.querySelector(".scopebar_pipe");
-    var something = document.querySelector('.b_scopebar li:nth-child(6)');
+    // var something = document.querySelector('.b_scopebar li:nth-child(6)');
     //something.insertAdjacentHTML('beforebegin', newItem2);
     //so something.after(newItem2) results in the < being interpreted as less than &lt but it works with newItem. so do I need the outerHTML at all???
     //something.after(newItem2);
     //something.after(newItem);
+
     selectorGetter.after(newItem);
 };
 
