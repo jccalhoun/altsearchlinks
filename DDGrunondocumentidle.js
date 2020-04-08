@@ -66,9 +66,7 @@ var ddgResults = document.querySelector('#duckbar_dropdowns');
         var newItem = document.createElement("li");
 
         newItem.id = addSearchElement;
-        var links = `<div class="sDropdown">
-<button class="sDropbtn zcm__link  js-zci-link">Alt Search</button>
-<div class="sDropdown-content">` + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + `</div></div>`;
+        var links = '<div class="sDropdown"> <button class="sDropbtn zcm__link  js-zci-link">Alt Search</button> <div class="sDropdown-content">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + '</div></div>';
         newItem.innerHTML = links;
 
         var newItem2 = newItem.outerHTML;
