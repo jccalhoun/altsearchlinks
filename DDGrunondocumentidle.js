@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match           *://duckduckgo.com/*
 // @grant       none
-// @version     2020.04.01
+// @version     2020.04.08
 // @author      -
 // @description 3/28/2020, 4:40:57 PM
 // @run-at document-idle
@@ -24,7 +24,7 @@ GM_addStyle (".sDropbtn {border: none; cursor: pointer; background-color: #fafaf
     "li {list-style-type: none;}"
 );
 
-console.log(document.querySelector('#duckbar_dropdowns'));
+console.log(document.querySelector('#duckbar_new'));
 //document.getElementById("duckbar_dropdowns").addEventListener("load", myAlert);
 //function myAlert() {
 //  console.log("hello butts");
@@ -37,7 +37,7 @@ console.log(document.querySelector('#duckbar_dropdowns'));
 //may also be able to use run-at document-idle https://violentmonkey.github.io/api/metadata-block/
 
 //yes! that works! 
-var ddgResults = document.querySelector('#duckbar_dropdowns');
+var ddgResults = document.querySelector('#duckbar_new');
     //window.location.search returns null for some reason
     var ddgSearchTerms = function () {
         var ddgResult = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
@@ -70,7 +70,7 @@ var ddgResults = document.querySelector('#duckbar_dropdowns');
         newItem.innerHTML = links;
 
         var newItem2 = newItem.outerHTML;
-        ddgResults.insertAdjacentHTML('beforebegin', newItem2);
+        ddgResults.after(newItem);
     };
 
     //ddgInsert();
