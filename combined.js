@@ -37,11 +37,12 @@ var siteURL = window.location.hostname;
 //unique to bing:
 /*addSiteStyle(".dropbtn {background-color: #fff !important; font-family: Arial, Helvetica, sans-serif; color: #444444; font-size: 11px !important; line-height: 30px !important;}"+
     ".dropdown:hover .dropbtn {background-color: #3e8e41;}"); */
-
+var selectorGetter;
 switch (siteURL) {
     case "www.bing.com":
         addSiteStyle(".dropbtn {background-color: #fff !important; font-family: Arial, Helvetica, sans-serif; color: #444444; font-size: 11px !important; line-height: 30px !important;}" + ".dropdown:hover .dropbtn {background-color: #3e8e41;}");
         console.log("switch works");
+        selectorGetter = document.querySelector('.b_scopebar li:nth-child(6)');
         break;
     case "duckduckgo.com":
         addSiteStyle(".zcm-wrap {position: static !important;}" + "li {list-style-type: none;}");
@@ -92,9 +93,7 @@ var bingInsert = function () {
     var newItem = document.createElement("li");
 
     newItem.id = addSearchElement;
-    var links = `<div class="dropdown">
-<button class="dropbtn">ALT SEARCH</button>
-<div class="dropdown-content">` + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + `</div></div>`;
+    var links = '<div class="dropdown"> <button class="dropbtn">ALT SEARCH</button> <div class="dropdown-content">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + '</div></div>';
     newItem.innerHTML = links;
 
     //var newItem2 = newItem.outerHTML;
@@ -104,7 +103,8 @@ var bingInsert = function () {
     //something.insertAdjacentHTML('beforebegin', newItem2);
     //so something.after(newItem2) results in the < being interpreted as less than &lt but it works with newItem. so do I need the outerHTML at all???
     //something.after(newItem2);
-    something.after(newItem);
+    //something.after(newItem);
+    selectorGetter.after(newItem);
 };
 
 bingInsert();
