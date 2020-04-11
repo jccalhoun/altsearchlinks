@@ -6,24 +6,36 @@
 // @match http://*.swagbucks.com/*
 
 // @grant       GM_addStyle
-// @version     2020.03.25
+// @version     2020.04.11
 // @author      -
 // @description 2/16/2020, 6:13:41 PM
 // ==/UserScript==
-GM_addStyle(".dropbtn {border: none; cursor: pointer; background-color: #fff !important; color: #666666; font-family: 'Open Sans',sans-serif; font-size: 1.4em;}" +
-
+GM_addStyle(".dropbtn {border: none; cursor: pointer;}" +
     ".dropdown {display: inline-block;}" +
-    ".dropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1;}" +
-            //.dropdown-content a needs !important on display:block for it to display in a vertical menu.
-    ".dropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; display: block !important;}" +
+    ".dropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1; box-shadow: 0 3px 5px rgba(0,0,0,0.19), 0 1px 1px rgba(0,0,0,0.23);}" +
+    //.dropdown-content a needs !important on display:block for it to display in a vertical menu.
+    ".dropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; }" +
     ".dropdown:hover .dropdown-content {display: block;}" +
 
     ".dropdown-content a:hover {background-color: #f2f2f2}" +
 
-    ".dropdown:hover .dropdown-content { display: block;}" +
+    ".dropdown:hover .dropdown-content { display: block;}");
 
-    ".dropdown:hover .dropbtn {    color: #2d6cae;}");
+function addSiteStyle(css) {
+    var head, style;
+    head = document.getElementsByTagName('head')[0];
+    if (!head) {
+        return;
+    }
+    style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = css;
+    head.appendChild(style);
+}
 
+addSiteStyle(".dropbtn {background-color: #fff !important; color: #666666; font-family: 'Open Sans',sans-serif; font-size: 1.4em;}" + ".dropdown-content a {display: block !important;}" +
+
+    ".dropdown:hover .dropbtn {color: #2d6cae;}")
 
 var addSearchElement = 'searchListener';
 
@@ -58,8 +70,8 @@ var swagInsert = function () {
 <div class="dropdown-content">` + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + `</div></div>`;
     newItem.innerHTML = links;
 
-    var elementGetter = document.getElementById("tab_n");
-    elementGetter.insertAdjacentElement("afterend", newItem);
+    var elementGetter = document.querySelector("#tab_n");
+    elementGetter.after(newItem);
 };
 
 swagInsert();
