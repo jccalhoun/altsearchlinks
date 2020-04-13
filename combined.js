@@ -92,7 +92,8 @@ var twitterLink = "<a href =\"http://twitter.com/search?q=" + results + "\">Twit
 var scholarLink = "<a href =\"http://scholar.google.com/scholar?q=" + results + "\">Google Scholar</a>";
 var msAcademicLink = "<a href =\"https://academic.microsoft.com/search?q=" + results + "\">MS Academic</a>";
 var wikipedia = "<a href =\"https://www.bing.com/search?q=site%3Aen.wikipedia.org+" + results + "\">Wikipedia</a>";
-
+var reddit = "<a href =\"https://www.reddit.com/search?q=" + results + "\">Reddit</a>";
+var gitHub = "<a href =\"https://github.com/search?utf8=✓&q=" + results + "\">GitHub</a>"; 
 
 
 var bingInsert = function () {
@@ -127,7 +128,7 @@ if (window.location.host == "www.bing.com") {
 
     other.setAttribute("id", "altsearch");
     other.setAttribute("style", "width: 1000px; font-size: small; margin: 10px 10px 5px 159px;");
-    var bottomLinks = "Try this search on " + googleLink + ", " + bingLink + ", " + yahooLink + ", " + swagLink + ", " + duckLink + ", " + wolfLink + ", " + twitterLink + ", " + scholarLink + ", " + msAcademicLink + ", " + wikipedia;
+    var bottomLinks = "Try this search on " + googleLink + ", " + bingLink + ", " + yahooLink + ", " + swagLink + ", " + duckLink + ", " + wolfLink + ", " + twitterLink + ", " + scholarLink + ", " + msAcademicLink + ", " + wikipedia + ", " + reddit + ", " + gitHub;
     other.innerHTML = bottomLinks;
     //results2.parentNode.insertBefore(other, results2);
     results2.before(other);
