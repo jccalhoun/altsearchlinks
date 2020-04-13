@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         combined
 // @namespace    http://tampermonkey.net/
-// @version      2020.04.11
+// @version      2020.04.12
 // @description  altsearchrefactored
 // @author       You
 // @include	http://www.bing.com/*
 // @include	https://www.bing.com/*
 // @match           *://duckduckgo.com/*
+// @match   *://*.swagbucks.com/*
 // @run-at document-idle
 // @grant        GM_addStyle
 // ==/UserScript==
@@ -48,6 +49,10 @@ switch (siteURL) {
     case "duckduckgo.com":
         addSiteStyle(".zcm-wrap {position: static !important;}" + "li {list-style-type: none;}" + ".dropbtn {font-size: 14.4px; color: #666666; background-color: #fafafa; font-family: inherit; line-height: 37px; font-weight: 600; }" + ".dropbtn:hover {color:#333333;}" + ".dropdown {position:static !important;}");
         selectorGetter = document.querySelector('#duckbar_new');
+        break;
+    case "www.swagbucks.com":
+        addSiteStyle(".dropbtn {background-color: #fff !important; color: #666666; font-family: 'Open Sans',sans-serif; font-size: 1.4em;}" + ".dropdown-content a {display: block !important;}" + ".dropdown:hover .dropbtn {color: #2d6cae;}");
+        selectorGetter = document.querySelector("#tab_n");
         break;
 }
 
