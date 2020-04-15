@@ -20,8 +20,7 @@ GM_addStyle(".dropbtn {border: none; cursor: pointer;}" +
     ".dropdown-content {display: none; position: absolute; background-color: #fff !important; z-index: 1; box-shadow: 0 3px 5px rgba(0,0,0,0.19), 0 1px 1px rgba(0,0,0,0.23);}" +
     ".dropdown-content a {color: 666; padding: 12px 16px !important; text-decoration: none; display: block !important;}" +
     ".dropdown:hover .dropdown-content {display: block;}" +
-    ".dropdown-content a:hover {background-color: #f2f2f2;}" +
-    ".dropdown:hover .dropdown-content {display: block;}");
+    ".dropdown-content a:hover {background-color: #f2f2f2;}");
 // from http://greasemonkey.win-start.de/patterns/add-css.html
 function addSiteStyle(css) {
     var head, style;
