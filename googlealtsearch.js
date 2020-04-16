@@ -50,13 +50,13 @@ var scholarLink = "<a href =\"http://scholar.google.com/scholar?q=" + results + 
 var msAcademicLink = "<a href =\"https://academic.microsoft.com/#/search?iq=" + results + "\">MS Academic</a>";
 
 var scholarBeforeMore = function () {
-
+//so creating a li vs a div doesn't seem to matter so change this to li to make it the same as combined?
     var node = document.createElement("div");
     node.id = scholarEleId;
     node.classList.add('hdtb-mitem');
     node.classList.add('hdtb-imb');
     //creates the div
-
+//and using after() instead of appendChild() seems to work even though it inserts it after the hdtb-msb-vis div and not in it. so the way it is now it creates the element, but it is empty, adds it to the page, then inserts the content. so i can change it to be like combined as well. 
     document.getElementById("hdtb-msb-vis").appendChild(node);
 
     //this next part is the dropdown from https://www.w3schools.com/howto/howto_css_dropdown.asp
