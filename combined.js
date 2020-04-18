@@ -46,7 +46,7 @@ switch (siteURL) {
         //console.log(selectorGetter);
         break;
     case "duckduckgo.com":
-        addSiteStyle(".zcm-wrap {position: static !important;}" + "li {list-style-type: none;}" + ".dropbtn {font-size: 14.4px; color: #666666; background-color: #fafafa; font-family: inherit; line-height: 37px; font-weight: 600; }" + ".dropbtn:hover {color:#333333;}" + ".dropdown {position:static !important;}");
+        addSiteStyle(".zcm-wrap {position: static !important;}" + "li {list-style-type: none;}" + ".dropbtn {font-size: 14.4px; color: #666666; background-color: #fafafa; font-family: inherit; line-height: 37px; font-weight: 600; height: 37px;}" + ".dropbtn:hover {color:#333333;}" + ".dropdown {position:static !important;}");
         selectorGetter = document.querySelector('#duckbar_new');
         break;
     case "www.swagbucks.com":
