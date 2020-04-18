@@ -4,9 +4,8 @@
 // @version      2020.04.12
 // @description  altsearchrefactored
 // @author       You
-// @include	http://www.bing.com/*
-// @include	https://www.bing.com/*
-// @match           *://duckduckgo.com/*
+// @match	*://*.bing.com/*
+// @match   *://*.duckduckgo.com/*
 // @match   *://*.swagbucks.com/*
 // @run-at document-idle
 // @grant        GM_addStyle
@@ -53,6 +52,10 @@ switch (siteURL) {
         addSiteStyle(".dropbtn {background-color: #fff !important; color: #666666; font-family: 'Open Sans',sans-serif; font-size: 1.4em;}" + ".dropdown-content a {display: block !important;}" + ".dropdown:hover .dropbtn {color: #2d6cae;}");
         selectorGetter = document.querySelector("#tab_n");
         break;
+    case "www.google.com":
+        addSiteStyle(".dropbtn {background-color: #ffffff !important; color: #5f6368; font-family: 'Roboto'; line-height:16px; font-size: 13px;}" + ".dropbtn:hover {color: #1A73E8}" + ".dropdown {position: relative;}" + ".dropdown-content {background-color: #ffffff !important;}");
+        selectorGetter = document.querySelector("#hdtb-msb-vis");
+        break;
 }
 
 
@@ -61,22 +64,10 @@ switch (siteURL) {
 var PLACEHOLDER_SELECTORS = '#resultStats, #b_results, .b-wordstat__text, .searchresults b, #ext_link, #sidebar, .b-global-wrapper, #gs_ab, #left, #zero_click_wrapper, bing-summary, .bing-summary, #bing-summary, #ucs';
 var results = document.querySelector(PLACEHOLDER_SELECTORS); */
 
-
+//i'm not sure that addSearchElement needs to be a variable?
 var addSearchElement = 'searchListener';
 
 var results = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
-//function () {
-//the match looks for anything after q= and it returns an array so we need the [1]. i am not sure what the (?:\?|&) is for. it tells it not to match that 
-//var result = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
-//if (window.location.href.indexOf('#q=') > -1) {
-//  result =  window.location.href.match(/#q=[^&]*/gi)[0].substr(3);}
-//return result;
-//};
-
-
-//the first var results finds the part of the search url after q= I don't know that I need the second one. it finds the thing after #q but I don't know which search engines use that? I think that if I just set results = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1]; then I need to make sure I call "results" NOT results() 
-
-
 
 //so all these are in a function currently but I think it should be fine to pull them out since that is how it is in the old alt search but the old one doesn't declare individual variables. Doing it individually could allow for not putting a link to the site you are already on (so a link to bing wouldn't show up if you were already on bing)
 
@@ -92,13 +83,12 @@ var scholarLink = "<a href =\"http://scholar.google.com/scholar?q=" + results + 
 var msAcademicLink = "<a href =\"https://academic.microsoft.com/search?q=" + results + "\">MS Academic</a>";
 var wikipedia = "<a href =\"https://www.bing.com/search?q=site%3Aen.wikipedia.org+" + results + "\">Wikipedia</a>";
 var reddit = "<a href =\"https://www.reddit.com/search?q=" + results + "\">Reddit</a>";
-var gitHub = "<a href =\"https://github.com/search?utf8=✓&q=" + results + "\">GitHub</a>"; 
+var gitHub = "<a href =\"https://github.com/search?utf8=✓&q=" + results + "\">GitHub</a>";
 
 
-var bingInsert = function () {
+var altInsert = function () {
     console.log(results);
     var newItem = document.createElement("li");
-
     newItem.id = addSearchElement;
     var links = '<div class="dropdown"> <button class="dropbtn">Alt Search</button> <div class="dropdown-content">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + '</div></div>';
     newItem.innerHTML = links;
@@ -115,7 +105,7 @@ var bingInsert = function () {
     selectorGetter.after(newItem);
 };
 
-bingInsert();
+altInsert();
 
 
 
