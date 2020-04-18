@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         google alt search
 // @namespace    http://tampermonkey.net/
-// @version      2020-04-17
+// @version      2020-04-18
 // @description  Add alt search to google
 // @author       You
 // @include	*://*.google.com/*
@@ -35,7 +35,8 @@ addSiteStyle(".dropbtn {background-color: #ffffff !important; color: #5f6368; fo
 
 var selectorGetter = document.querySelector("#hdtb-msb-vis");
 
-var scholarEleId = 'hdtb-us-scholar'; //when I genericize this I will need to make this a generic lable
+var addSearchElement = 'searchListener';
+
 var results = window.location.search.match(/(?:\?|&)q=([^&]*)/)[1];
 
 //adds this in so it can check to see if it exists after the page refreshes
@@ -53,10 +54,9 @@ var msAcademicLink = "<a href =\"https://academic.microsoft.com/#/search?iq=" + 
 var scholarBeforeMore = function () {
     //so creating a li vs a div doesn't seem to matter so change this to li to make it the same as combined?
     var newItem = document.createElement("li");
-    newItem.id = scholarEleId;
-    newItem.classList.add('hdtb-mitem');
-    newItem.classList.add('hdtb-imb');
-    var links = '<div class="dropdown"> <button class="dropbtn">Alt Search</button> <div class="dropdown-content _dMq">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + '</div></div>';
+    newItem.id = addSearchElement;
+//took out _dMq from dropdown-content because it doesn't seem to do anything?
+    var links = '<div class="dropdown"> <button class="dropbtn">Alt Search</button> <div class="dropdown-content">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + '</div></div>';
     newItem.innerHTML = links;
     //creates the div
     //and using after() instead of appendChild() seems to work even though it inserts it after the hdtb-msb-vis div and not in it. so the way it is now it creates the element, but it is empty, adds it to the page, then inserts the content. so i can change it to be like combined as well. 
@@ -86,7 +86,7 @@ var watchScholarLink = function () {
             // Normally the link bar is removed then added, along 
             // with search results, so just check additions.
             if (mutations[i].addedNodes) {
-                if (!document.getElementById(scholarEleId)) {
+                if (!document.getElementById(addSearchElement)) {
                     scholarBeforeMore();
                 }
                 break;
@@ -104,4 +104,6 @@ watchScholarLink();
 if (window.location.host == "www.google.com") {
     var icon = document.querySelector(".dropbtn");
     icon.insertAdjacentHTML("afterbegin", "<img alt='' width='16' height='16' src='data:image/svg+xml;base64,PHN2ZyBmb2N1c2FibGU9ImZhbHNlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0E2LjQ3MSA2LjQ3MSAwIDAgMCAxNiA5LjUgNi41IDYuNSAwIDEgMCA5LjUgMTZjMS42MSAwIDMuMDktLjU5IDQuMjMtMS41N2wuMjcuMjh2Ljc5bDUgNC45OUwyMC40OSAxOWwtNC45OS01em0tNiAwQzcuMDEgMTQgNSAxMS45OSA1IDkuNVM3LjAxIDUgOS41IDUgMTQgNy4wMSAxNCA5LjUgMTEuOTkgMTQgOS41IDE0eiIvPjwvc3ZnPg==' />");
+    document.getElementById("searchListener").classList.add("hdtb-mitem");
+    document.getElementById("searchListener").classList.add("hdtb-imb");
 };
