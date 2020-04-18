@@ -118,7 +118,7 @@ var watchGoogleLInk = function () {
             // with search results, so just check additions.
             if (mutations[i].addedNodes) {
                 if (!document.getElementById(addSearchElement)) {
-                    scholarBeforeMore();
+                    altInsert();
                 }
                 break;
             }
