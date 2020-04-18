@@ -77,7 +77,7 @@ var scholarBeforeMore = function () {
 
 
 
-var watchScholarLink = function () {
+var watchGoogleLInk = function () {
     // Whenever the query changes without changing the window href, our node
     // is removed, so use a MutationObserver to update and put us back.
     new MutationObserver(function (mutations) {
@@ -99,9 +99,10 @@ var watchScholarLink = function () {
 };
 
 scholarBeforeMore();
-watchScholarLink();
+
 
 if (window.location.host == "www.google.com") {
+    watchGoogleLInk();
     var icon = document.querySelector(".dropbtn");
     icon.insertAdjacentHTML("afterbegin", "<img alt='' width='16' height='16' src='data:image/svg+xml;base64,PHN2ZyBmb2N1c2FibGU9ImZhbHNlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0E2LjQ3MSA2LjQ3MSAwIDAgMCAxNiA5LjUgNi41IDYuNSAwIDEgMCA5LjUgMTZjMS42MSAwIDMuMDktLjU5IDQuMjMtMS41N2wuMjcuMjh2Ljc5bDUgNC45OUwyMC40OSAxOWwtNC45OS01em0tNiAwQzcuMDEgMTQgNSAxMS45OSA1IDkuNVM3LjAxIDUgOS41IDUgMTQgNy4wMSAxNCA5LjUgMTEuOTkgMTQgOS41IDE0eiIvPjwvc3ZnPg==' />");
     document.getElementById("searchListener").classList.add("hdtb-mitem");
