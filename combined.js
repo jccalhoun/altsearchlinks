@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         combined
 // @namespace    http://tampermonkey.net/
-// @version      2020.04.12
+// @version      2020.04.18
 // @description  altsearchrefactored
-// @author       You
+// @author       jccalhoun
 // @match	*://*.bing.com/*
 // @match   *://*.duckduckgo.com/*
 // @match   *://*.swagbucks.com/*
+// @match   *://*.google.com/*
 // @run-at document-idle
 // @grant        GM_addStyle
 // ==/UserScript==
@@ -87,7 +88,7 @@ var gitHub = "<a href =\"https://github.com/search?utf8=✓&q=" + results + "\">
 
 
 var altInsert = function () {
-    console.log(results);
+    //console.log(results);
     var newItem = document.createElement("li");
     newItem.id = addSearchElement;
     var links = '<div class="dropdown"> <button class="dropbtn">Alt Search</button> <div class="dropdown-content">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + '</div></div>';
@@ -106,8 +107,27 @@ var altInsert = function () {
 };
 
 altInsert();
-
-
+// modified from sergio91pt script http://userscripts.org/users/122653
+var watchGoogleLInk = function () {
+    // Whenever the query changes without changing the window href, our node
+    // is removed, so use a MutationObserver to update and put us back.
+    new MutationObserver(function (mutations) {
+        var len = mutations.length;
+        for (var i = 0; i < len; i++) {
+            // Normally the link bar is removed then added, along 
+            // with search results, so just check additions.
+            if (mutations[i].addedNodes) {
+                if (!document.getElementById(addSearchElement)) {
+                    scholarBeforeMore();
+                }
+                break;
+            }
+        }
+    }).observe(document.body, {
+        'childList': true,
+        'subtree': true
+    });
+};
 
 if (window.location.host == "www.bing.com") {
     console.log("bing bottom baby!");
@@ -121,4 +141,12 @@ if (window.location.host == "www.bing.com") {
     other.innerHTML = bottomLinks;
     //results2.parentNode.insertBefore(other, results2);
     results2.before(other);
-}
+};
+
+if (window.location.host == "www.google.com") {
+    watchGoogleLInk();
+    var icon = document.querySelector(".dropbtn");
+    icon.insertAdjacentHTML("afterbegin", "<img alt='' width='16' height='16' src='data:image/svg+xml;base64,PHN2ZyBmb2N1c2FibGU9ImZhbHNlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0E2LjQ3MSA2LjQ3MSAwIDAgMCAxNiA5LjUgNi41IDYuNSAwIDEgMCA5LjUgMTZjMS42MSAwIDMuMDktLjU5IDQuMjMtMS41N2wuMjcuMjh2Ljc5bDUgNC45OUwyMC40OSAxOWwtNC45OS01em0tNiAwQzcuMDEgMTQgNSAxMS45OSA1IDkuNVM3LjAxIDUgOS41IDUgMTQgNy4wMSAxNCA5LjUgMTEuOTkgMTQgOS41IDE0eiIvPjwvc3ZnPg==' />");
+    document.getElementById("searchListener").classList.add("hdtb-mitem");
+    document.getElementById("searchListener").classList.add("hdtb-imb");
+};
