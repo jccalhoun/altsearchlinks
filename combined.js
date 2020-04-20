@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         combined
 // @namespace    http://tampermonkey.net/
-// @version      2020.04.18
+// @version      2020.04.19
 // @description  altsearchrefactored
 // @author       jccalhoun
 // @match	*://*.bing.com/*
@@ -91,7 +91,7 @@ var altInsert = function () {
     //console.log(results);
     var newItem = document.createElement("li");
     newItem.id = addSearchElement;
-    var links = '<div class="dropdown"> <button class="dropbtn">Alt Search</button> <div class="dropdown-content">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + '</div></div>';
+    var links = '<div class="dropdown"> <button class="dropbtn">Alt Search</button> <div class="dropdown-content">' + googleLink + bingLink + yahooLink + swagLink + duckLink + wolfLink + twitterLink + scholarLink + msAcademicLink + wikipedia + reddit + gitHub + '</div></div>';
     newItem.innerHTML = links;
 
     //var newItem2 = newItem.outerHTML;
