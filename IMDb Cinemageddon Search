@@ -1,0 +1,75 @@
+// ==UserScript==
+// @name         IMDb Cinemageddon Search
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Add a button on IMDb movie pages to search Cinemageddon using the TT-ID
+// @match        https://www.imdb.com/title/*
+// @grant        none
+// @license      MIT
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    function addCinemageddonButton() {
+        // --- Get TT Number from URL ---
+        const currentURL = window.location.href;
+        const ttMatch = currentURL.match(/(tt\d+)/); // Regex to find 'tt' followed by digits
+        let ttNumber = null;
+
+        if (ttMatch && ttMatch[1]) {
+            ttNumber = ttMatch[1];
+        } else {
+            console.log("IMDb TT number not found in URL. Cannot create Cinemageddon link.");
+            return; // Exit if no TT number is found
+        }
+
+        // --- Prepare Cinemageddon URL ---
+        const cinemageddonURL = 'https://cinemageddon.net/browse.php?search=' + ttNumber;
+
+        // --- Find Title Element for Placement ---
+        const titleElement = document.querySelector('h1');
+        if (!titleElement) {
+            console.log("IMDb title element not found. Cannot place button.");
+            return;
+        }
+
+        // --- Create Button Container ---
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.flexWrap = 'wrap';
+        container.style.gap = '8px';
+        container.style.marginBottom = '8px';
+
+        // --- Helper function to create styled buttons ---
+        function createSearchButton(text, url) {
+            const btn = document.createElement('button');
+            btn.textContent = text;
+            btn.style.backgroundColor = '#f5c518'; // IMDb yellow
+            btn.style.color = '#000';
+            btn.style.border = 'none';
+            btn.style.padding = '6px 12px';
+            btn.style.fontSize = '14px';
+            btn.style.fontWeight = 'bold';
+            btn.style.borderRadius = '4px';
+            btn.style.cursor = 'pointer';
+
+            btn.addEventListener('click', () => {
+                window.open(url, '_blank');
+            });
+
+            return btn;
+        }
+
+        // --- Create and Add Cinemageddon Button ---
+        const cinemageddonButton = createSearchButton('Search on Cinemageddon', cinemageddonURL);
+        container.appendChild(cinemageddonButton);
+
+        // --- Insert Container into Page ---
+        // Insert the container ABOVE the title
+        titleElement.parentNode.insertBefore(container, titleElement);
+    }
+
+    // Wait for the DOM to be fully loaded
+    window.addEventListener('load', addCinemageddonButton);
+})();
