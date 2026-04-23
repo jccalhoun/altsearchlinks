@@ -1,0 +1,700 @@
+// ==UserScript==
+// @name         Combined AltSearch Dropdown (Enhanced)
+// @namespace    http://tampermonkey.net/
+// @version      1.9.07 // Version incremented
+// @description  Integrates a dropdown menu for alternative search options across Google, Bing, DuckDuckGo, Swagbucks, and Google Scholar.
+// @author       Gemini
+// @match        *://*.bing.com/*
+// @match        *://*.duckduckgo.com/*
+// @match        *://*.swagbucks.com/*
+// @match        *://*.google.com/search*
+// @match        *://scholar.google.com/scholar*
+// @run-at       document-idle
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // --- Enhanced Global Variables and Helper Functions ---
+    // ... (All the global helper functions like debounce, addGlobalStyle, extractSearchQuery,
+    //      getFilteredAltSearchLinks, and the common CSS styles remain unchanged from version 1.9.05) ...
+    // (For brevity, only showing the changed function and the parts leading up to the main execution block)
+
+    // Cached selectors to reduce DOM queries
+    const selectorCache = new Map();
+
+    // Debounce function
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Enhanced style injection
+    function addGlobalStyle(css, id) {
+        if (id && document.getElementById(id)) {
+            return;
+        }
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.textContent = css;
+        if (id) {
+            style.id = id;
+        }
+        document.head.appendChild(style);
+    }
+
+    // Enhanced query extraction
+    function extractSearchQuery() {
+        const patterns = [
+            /(?:\?|&)q=([^&]*)/,
+            /(?:\?|&)p=([^&]*)/,
+            /(?:\?|&)query=([^&]*)/,
+            /#q=([^&]*)/
+        ];
+        for (const pattern of patterns) {
+            const match = window.location.search.match(pattern) ||
+                          window.location.hash.match(pattern);
+            if (match) {
+                return decodeURIComponent(match[1].replace(/\+/g, ' ')).trim();
+            }
+        }
+        return "";
+    }
+
+    const currentQuery = extractSearchQuery();
+    const siteURL = window.location.hostname;
+
+    function getFilteredAltSearchLinks() {
+        const baseLinks = [
+            { name: "Google", url: `https://www.google.com/search?q=${encodeURIComponent(currentQuery)}`, domain: "google.com" },
+            { name: "Bing", url: `https://www.bing.com/search?q=${encodeURIComponent(currentQuery)}`, domain: "bing.com" },
+            { name: "Yahoo", url: `https://search.yahoo.com/search?p=${encodeURIComponent(currentQuery)}`, domain: "yahoo.com" },
+            { name: "DuckDuckGo", url: `https://duckduckgo.com/?q=${encodeURIComponent(currentQuery)}`, domain: "duckduckgo.com" },
+            { name: "WolframAlpha", url: `https://www.wolframalpha.com/input/?i=${encodeURIComponent(currentQuery)}`, domain: "wolframalpha.com" },
+            { name: "Google Scholar", url: `https://scholar.google.com/scholar?q=${encodeURIComponent(currentQuery)}`, domain: "scholar.google.com" },
+            { name: "Wikipedia", url: `https://www.bing.com/search?q=site%3Aen.wikipedia.org+${encodeURIComponent(currentQuery)}`, domain: "wikipedia.org" },
+            { name: "Reddit", url: `https://www.reddit.com/search?q=${encodeURIComponent(currentQuery)}`, domain: "reddit.com" },
+            { name: "GitHub", url: `https://github.com/search?q=${encodeURIComponent(currentQuery)}`, domain: "github.com" },
+            { name: "Mojeek", url: `https://www.mojeek.com/search?q=${encodeURIComponent(currentQuery)}`, domain: "mojeek.com" },
+            { name: "Karma", url: `https://karmasearch.org/search?q=${encodeURIComponent(currentQuery)}`, domain: "karmasearch.com" }
+        ];
+        return baseLinks.filter(link => !siteURL.includes(link.domain));
+    }
+
+    addGlobalStyle(`
+        .dropbtn {
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dropdown {
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #fff !important;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            min-width: 160px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .dropdown-content a {
+            color: #333;
+            padding: 10px 16px !important;
+            text-decoration: none;
+            display: block !important;
+            font-size: 13px;
+            line-height: 1.4;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.15s ease;
+        }
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+        .dropdown-content a:hover {
+            background-color: #f8f9fa;
+            color: #1a73e8;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .dropdown-content {
+                background-color: #202124 !important;
+                border-color: #5f6368;
+            }
+            .dropdown-content a {
+                color: #e8eaed;
+                border-bottom-color: #3c4043;
+            }
+            .dropdown-content a:hover {
+                background-color: #3c4043;
+                color: #8ab4f8;
+            }
+        }
+    `, 'altsearch-common-styles');
+
+    // --- Site-Specific Setup Functions ---
+    // [ ... setupGoogleAltSearch, insertBasicAltSearchDropdown, setupBingAltSearch, etc. from 1.9.05 ... ]
+    // (Ensure these functions are present in your actual script)
+    function setupGoogleAltSearch() {
+        let retryCount = 0;
+        const maxRetries = 5;
+
+        function createGoogleAltSearchDropdown() {
+            if (document.getElementById('altsearch-dropdown-container')) {
+                return true;
+            }
+
+            const selectors = [
+                'div[jscontroller="xdV1C"]',
+                '#hdtb-msb-vis',
+                '[role="navigation"] div',
+                '.hdtb-mitem'
+            ];
+            let insertionPoint = null;
+            for (const selector of selectors) {
+                insertionPoint = document.querySelector(selector);
+                if (insertionPoint) break;
+            }
+
+            if (!insertionPoint) {
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    setTimeout(createGoogleAltSearchDropdown, 200 * retryCount);
+                }
+                return false;
+            }
+
+            try {
+                const dropdownContainer = document.createElement('div');
+                dropdownContainer.id = 'altsearch-dropdown-container';
+                dropdownContainer.className = 'SF7xd';
+                dropdownContainer.setAttribute('role', 'listitem');
+                dropdownContainer.style.cssText = `
+                    position: relative;
+                    display: inline-block;
+                    vertical-align: top;
+                    margin-left: 10px;
+                `;
+
+                const dropdownButton = document.createElement('div');
+                dropdownButton.className = 'CcNe6e';
+                dropdownButton.setAttribute('aria-expanded', 'false');
+                dropdownButton.setAttribute('aria-haspopup', 'true');
+                dropdownButton.setAttribute('role', 'button');
+                dropdownButton.setAttribute('tabindex', '0');
+                dropdownButton.style.cursor = 'pointer';
+
+                dropdownButton.innerHTML = `
+                    <div class="Lu57id" style="
+                        background-color: #ffffff;
+                        color: #5f6368;
+                        font-family: Roboto, sans-serif;
+                        line-height: 16px;
+                        font-size: 13px;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        transition: color 0.2s ease, background-color 0.2s ease;
+                    ">
+                        <span style="height:16px;line-height:16px;width:16px;margin-right:6px;display:inline-block;vertical-align:middle" class="z1asCe SaPW2b">
+                            <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"></path>
+                            </svg>
+                        </span>
+                        Alt Search
+                    </div>
+                `;
+                const luDiv = dropdownButton.querySelector('.Lu57id');
+                dropdownButton.addEventListener('mouseenter', () => {
+                    luDiv.style.color = '#1A73E8';
+                    luDiv.style.backgroundColor = '#f8f9fa';
+                });
+                dropdownButton.addEventListener('mouseleave', () => {
+                    luDiv.style.color = '#5f6368';
+                    luDiv.style.backgroundColor = '#ffffff';
+                });
+                const dropdownContent = document.createElement('div');
+                dropdownContent.id = 'altsearch-dropdown-content';
+                dropdownContent.className = 'UjBGL iRQHZe';
+                dropdownContent.style.cssText = `
+                    display: none;
+                    position: fixed;
+                    box-shadow: 0 2px 10px rgba(32,33,36,.28);
+                    border-radius: 8px;
+                    background-color: #fff;
+                    border: 1px solid #dadce0;
+                    overflow: hidden;
+                    max-height: calc(100vh - 100px);
+                    overflow-y: auto;
+                    z-index: 9999;
+                    min-width: 180px;
+                `;
+
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'CybWFf';
+                contentWrapper.setAttribute('tabindex', '-1');
+                getFilteredAltSearchLinks().forEach(optionData => {
+                    const listItem = document.createElement('div');
+                    listItem.setAttribute('role', 'listitem');
+                    const a = document.createElement('a');
+                    a.href = optionData.url;
+                    a.className = 'd4DFfb nPDzT T3FoJb';
+                    a.setAttribute('role', 'link');
+                    a.style.cssText = `
+                        color: #333;
+                        padding: 10px 16px;
+                        text-decoration: none;
+                        display: block;
+                        font-size: 13px;
+                        white-space: nowrap;
+                        border-bottom: 1px solid #f0f0f0;
+                        transition: all 0.15s ease;
+                     `;
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'eJWNqc YmvwI';
+                    textDiv.textContent = optionData.name;
+                    a.appendChild(textDiv);
+                    listItem.appendChild(a);
+                    contentWrapper.appendChild(listItem);
+                    a.addEventListener('mouseenter', () => {
+                        a.style.backgroundColor = '#f8f9fa';
+                        a.style.color = '#1a73e8';
+                    });
+                    a.addEventListener('mouseleave', () => {
+                        a.style.backgroundColor = '';
+                        a.style.color = '#333';
+                    });
+                });
+                dropdownContent.appendChild(contentWrapper);
+                dropdownButton.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    const isExpanded = dropdownButton.getAttribute('aria-expanded') === 'true';
+                    dropdownButton.setAttribute('aria-expanded', !isExpanded);
+                    if (isExpanded) {
+                        dropdownContent.style.display = 'none';
+                    } else {
+                        const buttonRect = dropdownButton.getBoundingClientRect();
+                        const viewportHeight = window.innerHeight;
+                        const viewportWidth = window.innerWidth;
+                        let left = buttonRect.left;
+                        let top = buttonRect.bottom + 8;
+                        if (left + dropdownContent.offsetWidth > viewportWidth) {
+                            left = viewportWidth - dropdownContent.offsetWidth - 20;
+                        }
+                        if (top + dropdownContent.offsetHeight > viewportHeight) {
+                            top = buttonRect.top - dropdownContent.offsetHeight - 8;
+                        }
+                        dropdownContent.style.left = Math.max(10, left) + 'px';
+                        dropdownContent.style.top = Math.max(10, top) + 'px';
+                        dropdownContent.style.display = 'block';
+                    }
+                });
+                dropdownButton.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        dropdownButton.click();
+                    } else if (event.key === 'Escape') {
+                        dropdownButton.setAttribute('aria-expanded', 'false');
+                        dropdownContent.style.display = 'none';
+                    }
+                });
+                document.addEventListener('click', function(event) {
+                    if (!dropdownContainer.contains(event.target)) {
+                        dropdownButton.setAttribute('aria-expanded', 'false');
+                        dropdownContent.style.display = 'none';
+                    }
+                });
+                dropdownContainer.appendChild(dropdownButton);
+                dropdownContainer.appendChild(dropdownContent);
+
+                if (insertionPoint.querySelector('ul')) {
+                    const newLi = document.createElement('li');
+                    newLi.appendChild(dropdownContainer);
+                    insertionPoint.querySelector('ul').appendChild(newLi);
+                } else if (insertionPoint.parentNode) {
+                    insertionPoint.parentNode.insertBefore(dropdownContainer, insertionPoint.nextSibling);
+                } else {
+                    insertionPoint.appendChild(dropdownContainer);
+                }
+                return true;
+            } catch (error) {
+                console.error('Google AltSearch: Error creating dropdown:', error);
+                return false;
+            }
+        }
+
+        const debouncedGCallback = debounce(function() {
+            if (!document.getElementById('altsearch-dropdown-container')) {
+                createGoogleAltSearchDropdown();
+            }
+        }, 100);
+        const googleObserver = new MutationObserver(debouncedGCallback);
+        const initGoogle = () => {
+            if (createGoogleAltSearchDropdown()) {
+                googleObserver.observe(document.body, {
+                    childList: true,
+                    subtree: true,
+                    attributes: false
+                });
+            }
+        };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGoogle);
+        } else {
+            setTimeout(initGoogle, 100);
+        }
+    }
+
+    function insertBasicAltSearchDropdown(insertionPointElement, siteSpecificStyles = {}, insertionMethod = 'afterend') {
+        if (!insertionPointElement) {
+            console.log('AltSearch: Insertion point element for basic dropdown not found.');
+            return false;
+        }
+        if (document.getElementById("searchListener")) { // Check if an element with this ID already exists globally
+            // If we want to allow multiple instances on different sites but not on the same page,
+            // this check needs to be more nuanced or the ID needs to be site-specific.
+            // For now, assuming one instance per page is the rule.
+            const parentOfExisting = document.getElementById("searchListener").parentElement;
+            if (parentOfExisting && insertionPointElement.contains(parentOfExisting) || insertionPointElement === parentOfExisting) {
+                 // Trying to insert into the same broad area again
+                 return false;
+            }
+        }
+        try {
+            const newItem = document.createElement("li");
+            newItem.id = "searchListener"; // This ID should be unique on the page.
+            const dropdownDiv = document.createElement("div");
+            dropdownDiv.className = "dropdown";
+            const dropbtn = document.createElement("button");
+            dropbtn.className = "dropbtn";
+            dropbtn.textContent = "Alt Search";
+            Object.assign(dropbtn.style, siteSpecificStyles);
+            const dropdownContent = document.createElement("div");
+            dropdownContent.className = "dropdown-content";
+            getFilteredAltSearchLinks().forEach(linkData => {
+                const a = document.createElement("a");
+                a.href = linkData.url;
+                a.textContent = linkData.name;
+                a.setAttribute('rel', 'noopener');
+                dropdownContent.appendChild(a);
+            });
+            dropdownDiv.appendChild(dropbtn);
+            dropdownDiv.appendChild(dropdownContent);
+            newItem.appendChild(dropdownDiv);
+            if (insertionMethod === 'appendChild') {
+                insertionPointElement.appendChild(newItem);
+            } else {
+                insertionPointElement.insertAdjacentElement('afterend', newItem);
+            }
+            console.log('AltSearch: Basic dropdown inserted.');
+            return true;
+        } catch (error) {
+            console.error('AltSearch: Error inserting basic dropdown:', error);
+            return false;
+        }
+    }
+
+    function setupBingAltSearch() {
+        addGlobalStyle(`
+            #searchListener .dropbtn {
+                background-color: #fff !important;
+                font-family: Arial, Helvetica, sans-serif;
+                color: #444;
+                font-size: 11px !important;
+                line-height: 30px !important;
+                text-transform: uppercase;
+                padding: 0 12px;
+                border-radius: 2px;
+            }
+            #searchListener .dropdown:hover .dropbtn {
+                background-color: #e1ecf4;
+                color: #0078d4;
+            }
+            .b_scopebar { z-index: 5; } /* Ensure Bing's scopebar doesn't hide our dropdown if z-index applied to #searchListener */
+        `, 'altsearch-bing-styles');
+
+        const selectorGetter = document.querySelector('.b_scopebar li:nth-child(6)');
+
+        function tryInsertBingDropdown() {
+            if (document.getElementById('searchListener') && document.querySelector('.b_scopebar #searchListener')) return true; // Already inserted in scopebar
+            const targetLi = document.querySelector('.b_scopebar li:nth-child(6)'); // Re-select in case DOM changed
+            if (targetLi) {
+                return insertBasicAltSearchDropdown(targetLi);
+            }
+            return false;
+        }
+
+        if (tryInsertBingDropdown()) {
+            function insertBingBottomLinks() {
+                if (document.getElementById("altsearch-bottom-bing")) return;
+                const resultsNode = document.querySelector(".b_pag");
+                if (!resultsNode) return;
+                const bottomContainer = document.createElement('div');
+                bottomContainer.id = "altsearch-bottom-bing"; // Unique ID
+                bottomContainer.style.cssText = `
+                    max-width: 1000px;
+                    font-size: 13px;
+                    margin: 15px 0 10px 159px;
+                    padding: 10px;
+                    background-color: #f8f9fa;
+                    border-radius: 4px;
+                    border-left: 3px solid #0078d4;
+                `;
+                const tryText = document.createElement('span');
+                tryText.textContent = 'Try this search on: ';
+                tryText.style.fontWeight = '500';
+                bottomContainer.appendChild(tryText);
+                getFilteredAltSearchLinks().forEach((linkData) => {
+                    const a = document.createElement("a");
+                    a.href = linkData.url;
+                    a.textContent = linkData.name;
+                    a.style.cssText = `
+                        color: #0078d4;
+                        text-decoration: none;
+                        margin-right: 12px;
+                        font-weight: 500;
+                     `;
+                    a.addEventListener('mouseenter', () => a.style.textDecoration = 'underline');
+                    a.addEventListener('mouseleave', () => a.style.textDecoration = 'none');
+                    bottomContainer.appendChild(a);
+                });
+                resultsNode.before(bottomContainer);
+            }
+            insertBingBottomLinks();
+            const bingObserver = new MutationObserver(debounce(() => {
+                tryInsertBingDropdown();
+                if (!document.getElementById("altsearch-bottom-bing")) {
+                    insertBingBottomLinks();
+                }
+            }, 150));
+            const scopeBar = document.querySelector(".b_scopebar");
+            const bottomPag = document.querySelector("#b_results"); // Broader area for bottom links
+            if (scopeBar) {
+                bingObserver.observe(scopeBar, { childList: true, subtree: false }); // Observe direct children change
+            }
+            if (bottomPag){
+                bingObserver.observe(bottomPag, { childList: true, subtree: true });
+            }
+        }
+    }
+
+    function setupDuckDuckGoAltSearch() {
+        addGlobalStyle(`
+            .zcm-wrap { position: static !important; }
+            #searchListener li { list-style-type: none; }
+            #react-duckbar nav #searchListener .dropbtn {
+                font-size: 14px;
+                color: #666;
+                background-color: #fafafa;
+                font-family: inherit;
+                line-height: 37px;
+                font-weight: 600;
+                height: 37px;
+                padding: 0 10px;
+                border-radius: 4px;
+                border: 1px solid #e0e0e0;
+                margin-left: 8px;
+            }
+            #react-duckbar nav #searchListener .dropbtn:hover {
+                color: #333;
+                background-color: #f0f0f0;
+                border-color: #ccc;
+            }
+            #react-duckbar nav > #searchListener { /* Target the li element */
+                display: inline-block;
+                vertical-align: top;
+            }
+            #react-duckbar nav #searchListener .dropdown {
+                position: static !important; /* DDG specific override if needed */
+            }
+        `, 'altsearch-duckduckgo-styles');
+        let attempts = 0;
+        const maxAttempts = 15;
+        const intervalTime = 500;
+        const initialDelay = 750;
+
+        function findAndInsertDropdown() {
+            // Check if already inserted to prevent duplicates from observer/retry
+            if (document.querySelector("#react-duckbar #searchListener")) return;
+
+            const reactDuckbar = document.getElementById('react-duckbar');
+            if (reactDuckbar) {
+                const navElement = reactDuckbar.getElementsByTagName('nav')[0];
+                if (navElement) {
+                    // insertBasicAltSearchDropdown creates an <li>, navElement is <nav>
+                    // SiteSpecificStyles for button are handled by addGlobalStyle with high specificity
+                    insertBasicAltSearchDropdown(navElement, {}, 'appendChild');
+                } else {
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(findAndInsertDropdown, intervalTime);
+                    } else {
+                        console.log('AltSearch: DuckDuckGo <nav> element within #react-duckbar not found.');
+                    }
+                }
+            } else {
+                attempts++;
+                if (attempts < maxAttempts) {
+                    setTimeout(findAndInsertDropdown, intervalTime);
+                } else {
+                    console.log('AltSearch: DuckDuckGo #react-duckbar not found after multiple attempts.');
+                }
+            }
+        }
+
+        // Initial attempt
+        setTimeout(() => {
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                findAndInsertDropdown();
+            } else {
+                document.addEventListener('DOMContentLoaded', findAndInsertDropdown);
+            }
+        }, initialDelay);
+
+        // Observer for dynamic content changes on DDG
+        const ddgObserver = new MutationObserver(debounce(() => {
+            findAndInsertDropdown();
+        }, 200));
+        const observerTarget = document.getElementById('react-duckbar') || document.body;
+        ddgObserver.observe(observerTarget, { childList: true, subtree: true });
+
+    }
+
+    function setupSwagbucksAltSearch() {
+        addGlobalStyle(`
+            #searchListener .dropbtn {
+                background-color: #fff !important;
+                color: #666;
+                font-family: 'Open Sans', sans-serif;
+                font-size: 14px;
+                padding: 8px 16px;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+            }
+            #searchListener .dropdown-content a { display: block !important; }
+            #searchListener .dropdown:hover .dropbtn {
+                color: #2d6cae;
+                background-color: #f8f9fa;
+                border-color: #2d6cae;
+            }
+        `, 'altsearch-swagbucks-styles');
+
+        function tryInsertSwagbucksDropdown() {
+            if (document.getElementById('searchListener') && document.querySelector('#tab_n #searchListener')) return true;
+            const insertionPointElement = document.querySelector("#tab_n");
+            if (insertionPointElement) {
+                // insertBasicAltSearchDropdown will create an <li>. #tab_n is likely a <ul> or <div>.
+                // If #tab_n is a ul, this might need 'appendChild' if it's meant to be a tab.
+                // Given it's just inserting after, it likely becomes a sibling to the tabs.
+                return insertBasicAltSearchDropdown(insertionPointElement, {}, 'afterend');
+            }
+            return false;
+        }
+
+        tryInsertSwagbucksDropdown(); // Initial attempt
+
+        // Swagbucks might also load content dynamically
+        const swagbucksObserver = new MutationObserver(debounce(() => {
+            tryInsertSwagbucksDropdown();
+        }, 200));
+        const targetNode = document.getElementById('hdTop') || document.body; // Observe a stable parent or body
+        swagbucksObserver.observe(targetNode, {childList: true, subtree: true});
+    }
+
+    /**
+     * Setup for Google Scholar
+     */
+    function setupGoogleScholarAltSearch() {
+        const gsAbMdElement = document.getElementById('gs_ab_md');
+
+        if (gsAbMdElement) {
+            // MODIFIED: Set overflow to visible on the specific container
+            gsAbMdElement.style.overflow = 'visible';
+            // If the above doesn't work due to CSS specificity, try with !important:
+            // gsAbMdElement.style.setProperty('overflow', 'visible', 'important');
+
+            // Search for insertion point within the identified gs_ab_md element
+            const insertionPoint = gsAbMdElement.querySelector('.gs_ab_mdw');
+
+            if (insertionPoint) {
+                const scholarButtonStyles = {
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    backgroundColor: '#f8f9fa',
+                    color: '#4285f4',
+                    border: '1px solid #dadce0',
+                    borderRadius: '4px',
+                    marginLeft: '10px',
+                    marginTop: '0px',
+                    display: 'inline-block',
+                    verticalAlign: 'middle'
+                };
+
+                addGlobalStyle(`
+                    #gs_ab_md #searchListener {
+                        display: inline-block;
+                        vertical-align: middle;
+                        margin-left: 8px;
+                        position: relative;
+                        z-index: 9990; /* Kept from 1.9.05 to ensure #searchListener is lifted */
+                    }
+                `, 'altsearch-googlescholar-container-styles');
+
+                insertBasicAltSearchDropdown(insertionPoint, scholarButtonStyles, 'afterend');
+            } else {
+                console.log("AltSearch: Google Scholar insertion point '.gs_ab_mdw' (within '#gs_ab_md') not found.");
+            }
+        } else {
+            console.log("AltSearch: Google Scholar container '#gs_ab_md' not found. Cannot setup dropdown or override overflow.");
+        }
+    }
+
+    // --- Enhanced Main Execution with Error Handling ---
+    try {
+        switch (siteURL) {
+            case "www.google.com":
+                setupGoogleAltSearch();
+                break;
+            case "www.bing.com":
+                setupBingAltSearch();
+                break;
+            case "duckduckgo.com":
+                setupDuckDuckGoAltSearch();
+                break;
+            case "www.swagbucks.com":
+                setupSwagbucksAltSearch();
+                break;
+            case "scholar.google.com":
+                setupGoogleScholarAltSearch();
+                break;
+            default:
+                console.log("AltSearch: Site not supported:", siteURL);
+                break;
+        }
+    } catch (error) {
+        console.error("AltSearch: Fatal error during initialization:", error);
+    }
+
+    window.addEventListener('beforeunload', () => {
+        selectorCache.clear();
+        // Potentially disconnect observers if they were stored globally
+        if (typeof googleObserver !== 'undefined' && googleObserver.disconnect) googleObserver.disconnect();
+        if (typeof bingObserver !== 'undefined' && bingObserver.disconnect) bingObserver.disconnect();
+        if (typeof ddgObserver !== 'undefined' && ddgObserver.disconnect) ddgObserver.disconnect();
+        if (typeof swagbucksObserver !== 'undefined' && swagbucksObserver.disconnect) swagbucksObserver.disconnect();
+    });
+})();
