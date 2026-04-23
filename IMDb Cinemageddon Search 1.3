@@ -1,0 +1,89 @@
+// ==UserScript==
+// @name         IMDb Cinemageddon Search
+// @namespace    http://tampermonkey.net/
+// @version      1.3
+// @description  Add a button on IMDb movie pages to search Cinemageddon using the TT-ID
+// @match        https://www.imdb.com/title/*
+// @grant        none
+// @run-at       document-idle
+// @license      MIT
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    const BUTTON_ID = 'cinemageddon-search-btn-container';
+
+    function debounce(fn, ms) {
+        let timer;
+        return () => { clearTimeout(timer); timer = setTimeout(fn, ms); };
+    }
+
+    function createSearchLink(text, url) {
+        const a = document.createElement('a');
+        a.textContent = text;
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        Object.assign(a.style, {
+            display: 'inline-block',
+            backgroundColor: '#f5c518',
+            color: '#000',
+            textDecoration: 'none',
+            padding: '6px 12px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            transition: 'background-color 0.15s',
+        });
+        a.addEventListener('mouseenter', () => a.style.backgroundColor = '#e0b310');
+        a.addEventListener('mouseleave', () => a.style.backgroundColor = '#f5c518');
+        return a;
+    }
+
+    // Accept ttNumber as a parameter to avoid redundant regex
+    function addCinemageddonButton(ttNumber) {
+        const titleElement =
+            document.querySelector('[data-testid="hero__pageTitle"]') ||
+            document.querySelector('h1');
+
+        if (!titleElement) return;
+
+        const container = document.createElement('div');
+        container.id = BUTTON_ID;
+        container.dataset.ttid = ttNumber;
+        container.style.cssText = 'display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;';
+
+        const url = 'https://cinemageddon.net/browse.php?search=' + encodeURIComponent(ttNumber);
+        container.appendChild(createSearchLink('Search on Cinemageddon', url));
+
+        titleElement.parentNode.insertBefore(container, titleElement);
+    }
+
+    const observer = new MutationObserver(debounce(() => {
+        const pathname = window.location.pathname;
+        if (!pathname.includes('/title/')) return;
+
+        const ttMatch = pathname.match(/\/title\/(tt\d+)/);
+        if (!ttMatch) return;
+        const currentTT = ttMatch[1];
+
+        const existing = document.getElementById(BUTTON_ID);
+        if (existing) {
+            if (existing.dataset.ttid === currentTT) return;
+            existing.remove(); // Nuke stale button
+        }
+
+        // Pass the extracted ID to the builder function
+        addCinemageddonButton(currentTT);
+    }, 300));
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Initial load check
+    const initialMatch = window.location.pathname.match(/\/title\/(tt\d+)/);
+    if (initialMatch) {
+        addCinemageddonButton(initialMatch[1]);
+    }
+})();
