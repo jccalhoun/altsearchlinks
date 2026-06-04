@@ -1,0 +1,501 @@
+// ==UserScript==
+// @name         AltSearch Refactored (Unified + Original Styles + CSP/A11y Safe 2)
+// @namespace    https://greasyfork.org/users/9631
+// @version      3.3.0
+// @description  Performs search on other sites. SPA-aware, unified observer, with original styling.
+// @author       jccalhoun & Gemini & Claude
+// @match        *://*.bing.com/*
+// @match        *://*.duckduckgo.com/*
+// @match        *://*.swagbucks.com/*
+// @match        *://*.google.com/*
+// @run-at       document-idle
+// @grant        none
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
+    const CONTAINER_ID        = 'searchListener';
+    const DROPDOWN_CONTENT_ID = 'altsearch-dropdown-content';
+    const BING_BOTTOM_ID      = 'altsearch-bing-bottom';
+
+    // -------------------------------------------------------------------------
+    // Utilities
+    // -------------------------------------------------------------------------
+
+    function debounce(fn, ms) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn(...args), ms);
+        };
+    }
+
+    /**
+     * Inject a <style> block into <head> exactly once.
+     * Subsequent calls with the same `id` are no-ops.
+     */
+    function addGlobalStyle(css, id) {
+        if (id && document.getElementById(id)) return;
+        const style = document.createElement('style');
+        style.textContent = css;
+        if (id) style.id = id;
+        document.head.appendChild(style);
+    }
+
+    /**
+     * Read the search query from the current URL.
+     * Called fresh on every injection so it never goes stale after a
+     * dynamic navigation that does not trigger a full page reload.
+     */
+    function extractSearchQuery() {
+        const src = window.location.search + window.location.hash;
+        const patterns = [
+            /(?:\?|&|#)q=([^&]*)/,
+            /(?:\?|&)p=([^&]*)/,
+            /(?:\?|&)query=([^&]*)/,
+        ];
+        for (const pattern of patterns) {
+            const m = src.match(pattern);
+            if (m) return decodeURIComponent(m[1].replace(/\+/g, ' ')).trim();
+        }
+        return '';
+    }
+
+    /**
+     * Return the list of alternative search engine links for `query`,
+     * filtered to exclude whichever site the user is currently on.
+     * `host.endsWith()` correctly handles subdomains (e.g. scholar.google.com).
+     */
+    function getAltSearchLinks(query) {
+        if (!query) return [];
+        const enc  = encodeURIComponent(query);
+        const host = window.location.hostname;
+
+        const all = [
+            { name: 'Google',         url: `https://www.google.com/search?q=${enc}`,                        domain: 'google.com'         },
+            { name: 'Bing',           url: `https://www.bing.com/search?q=${enc}`,                          domain: 'bing.com'           },
+            { name: 'Yahoo',          url: `https://search.yahoo.com/search?p=${enc}`,                      domain: 'yahoo.com'          },
+            { name: 'DuckDuckGo',     url: `https://duckduckgo.com/?q=${enc}`,                              domain: 'duckduckgo.com'     },
+            { name: 'WolframAlpha',   url: `https://www.wolframalpha.com/input/?i=${enc}`,                  domain: 'wolframalpha.com'   },
+            { name: 'Google Scholar', url: `https://scholar.google.com/scholar?q=${enc}`,                   domain: 'scholar.google.com' },
+            { name: 'Wikipedia',      url: `https://www.bing.com/search?q=site%3Aen.wikipedia.org+${enc}`, domain: 'wikipedia.org'      },
+            { name: 'Reddit',         url: `https://www.reddit.com/search?q=${enc}`,                        domain: 'reddit.com'         },
+            { name: 'GitHub',         url: `https://github.com/search?q=${enc}`,                            domain: 'github.com'         },
+            { name: 'Mojeek',         url: `https://www.mojeek.com/search?q=${enc}`,                        domain: 'mojeek.com'         },
+            { name: 'Karma',          url: `https://karmasearch.org/search?q=${enc}`,                       domain: 'karmasearch.com'    },
+        ];
+
+        return all.filter(link => !host.endsWith(link.domain));
+    }
+
+    /**
+     * Build <a> elements from a link list as DOM nodes.
+     * Avoids innerHTML so no unsanitized content ever touches the DOM,
+     * and keeps the approach consistent across the whole script.
+     * role="menuitem" pairs with the role="menu" on the panel container.
+     */
+    function buildLinkNodes(links) {
+        return links.map(({ name, url }) => {
+            const a = document.createElement('a');
+            a.href        = url;
+            a.textContent = name;
+            a.target      = '_blank';
+            a.rel         = 'noopener noreferrer';
+            a.setAttribute('role', 'menuitem');
+            return a;
+        });
+    }
+
+    /**
+     * Build the Google dropdown arrow SVG using createElementNS.
+     * Avoids innerHTML, which is blocked by Manifest V3 / strict CSP environments.
+     */
+    function createGoogleSvgArrow() {
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const svg   = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('focusable',   'false');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('viewBox',     '0 0 24 24');
+        const path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('d', 'M7 10l5 5 5-5z');
+        svg.appendChild(path);
+        return svg;
+    }
+
+    // -------------------------------------------------------------------------
+    // Shared styles — injected once, apply to all sites
+    // -------------------------------------------------------------------------
+    addGlobalStyle(`
+        .dropbtn { border: none; cursor: pointer; }
+        .dropdown { display: inline-block; }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #fff !important;
+            z-index: 9999;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.19), 0 1px 1px rgba(0,0,0,0.23);
+        }
+        .dropdown-content a {
+            color: #666;
+            padding: 12px 16px !important;
+            text-decoration: none;
+            display: block !important;
+        }
+        .dropdown:hover .dropdown-content { display: block; }
+        .dropdown-content a:hover { background-color: #f2f2f2; }
+    `, 'altsearch-universal-styles');
+
+    // -------------------------------------------------------------------------
+    // Core dropdown builder — SPA-aware
+    // -------------------------------------------------------------------------
+
+    /**
+     * Get or create the shared dropdown container for the current query.
+     *
+     * Three cases:
+     *   1. Container exists, query matches → return as-is (isNew: false).
+     *   2. Container exists, query is stale → nuke it (and any orphaned panel
+     *      that may have been moved to <body> by the Google config), then build
+     *      a fresh one (isNew: true).
+     *   3. No container → build one (isNew: true).
+     *
+     * Callers check `isNew` before attempting DOM insertion to avoid
+     * re-inserting a container that is already correctly placed.
+     */
+    function getOrCreateDropdown(currentQuery) {
+        let container = document.getElementById(CONTAINER_ID);
+
+        if (container) {
+            if (container.dataset.query === currentQuery) {
+                return {
+                    node:    container,
+                    wrapper: container.querySelector('.dropdown'),
+                    btn:     container.querySelector('.dropbtn'),
+                    panel:   document.getElementById(DROPDOWN_CONTENT_ID),
+                    isNew:   false,
+                };
+            }
+            // Query changed (SPA navigation) — remove the stale container.
+            // The panel may have been moved to <body> by the Google config to
+            // escape its overflow:hidden toolbar, so we remove it by ID rather
+            // than assuming it is a child of the container.
+            document.getElementById(DROPDOWN_CONTENT_ID)?.remove();
+            container.remove();
+        }
+
+        // Build a fresh container
+        container = document.createElement('li');
+        container.id            = CONTAINER_ID;
+        container.dataset.query = currentQuery;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'dropdown';
+
+        // Button — ARIA wired up here so every site gets correct semantics,
+        // not just the Google-specific build path.
+        const btn = document.createElement('button');
+        btn.className   = 'dropbtn';
+        btn.textContent = 'Alt Search';
+        btn.setAttribute('aria-haspopup', 'true');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-controls', DROPDOWN_CONTENT_ID);
+
+        // Panel — role="menu" pairs with role="menuitem" on each link node
+        const panel = document.createElement('div');
+        panel.className = 'dropdown-content';
+        panel.id        = DROPDOWN_CONTENT_ID;
+        panel.setAttribute('role', 'menu');
+
+        buildLinkNodes(getAltSearchLinks(currentQuery)).forEach(a => panel.appendChild(a));
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(panel);
+        container.appendChild(wrapper);
+
+        return { node: container, wrapper, btn, panel, isNew: true };
+    }
+
+    // -------------------------------------------------------------------------
+    // Site configurations
+    // -------------------------------------------------------------------------
+
+    const SITE_CONFIGS = [
+        {
+            name:      'Google',
+            // Exclude Scholar — it has its own entry if needed
+            hostMatch: (h) => h.endsWith('google.com') && h !== 'scholar.google.com',
+            css: `
+                /* Strip default button chrome so Google's native classes take over */
+                #${CONTAINER_ID} button.mOKdDc {
+                    background: transparent; border: none;
+                    padding: 0; outline: none; height: 100%; cursor: pointer;
+                }
+                /* Dropdown panel — matches Google's Material 3 surface style */
+                #${DROPDOWN_CONTENT_ID} {
+                    background-color: #ffffff !important;
+                    border-radius: 8px;
+                    border: 1px solid #dadce0;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    min-width: 160px;
+                    overflow: hidden;
+                    padding: 4px 0;
+                    z-index: 999999 !important;
+                }
+                #${DROPDOWN_CONTENT_ID} a {
+                    padding: 10px 16px !important;
+                    color: #3c4043 !important;
+                    font-family: Roboto, Arial, sans-serif;
+                    font-size: 13px;
+                    text-decoration: none;
+                    display: block;
+                    transition: background 0.15s;
+                }
+                #${DROPDOWN_CONTENT_ID} a:hover {
+                    background-color: #f1f3f4 !important;
+                    color: #1a73e8 !important;
+                }
+            `,
+            inject: (query) => {
+                const { node, wrapper, btn, panel, isNew } = getOrCreateDropdown(query);
+                if (!isNew) return;
+
+                // Apply Google's own CSS classes so the button blends into the
+                // search tools bar without needing extra custom styles
+                node.className     = 'yeKjxb';
+                node.style.cssText = 'display:inline-block; vertical-align:middle; list-style:none; margin-left:2px;';
+                btn.className      = 'mOKdDc';
+                btn.textContent    = ''; // Clear default text before constructing inner DOM
+
+                // Build button contents via DOM API (not innerHTML) for CSP safety
+                const outerFlex = document.createElement('div');
+                outerFlex.className    = 'mXwfNd';
+                outerFlex.style.cssText = 'display:flex; align-items:center;';
+
+                const innerFlex = document.createElement('div');
+                innerFlex.className    = 'mVH5Fc';
+                innerFlex.style.cssText = 'display:flex; align-items:center;';
+
+                // Search icon (base64-encoded SVG avoids an extra network request)
+                const img = document.createElement('img');
+                img.alt    = '';
+                img.width  = 16;
+                img.height = 16;
+                img.src    = 'data:image/svg+xml;base64,PHN2ZyBmb2N1c2FibGU9ImZhbHNlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTE1LjUgMTRoLS43OWwtLjI4LS4yN0E2LjQ3MSA2LjQ3MSAwIDAgMCAxNiA5LjUgNi41IDYuNSAwIDEgMCA5LjUgMTZjMS42MSAwIDMuMDktLjU5IDQuMjMtMS41N2wuMjcuMjh2Ljc5bDUgNC45OUwyMC40OSAxOWwtNC45OS01em0tNiAwQzcuMDEgMTQgNSAxMS45OSA1IDkuNVM3LjAxIDUgOS41IDUgMTQgNy4wMSAxNCA5LjUgMTEuOTkgMTQgOS41IDE0eiIvPjwvc3ZnPg==';
+                img.style.marginRight = '6px';
+
+                const textSpan = document.createElement('span');
+                textSpan.className   = 'R1QWuf';
+                textSpan.textContent = 'Alt Search';
+
+                const arrowSpan = document.createElement('span');
+                arrowSpan.className    = 'FXBAof M5dSnd z1asCe K1bG5d';
+                arrowSpan.style.cssText = 'height:16px; line-height:16px; width:16px; margin-left:2px;';
+                arrowSpan.appendChild(createGoogleSvgArrow());
+
+                innerFlex.appendChild(img);
+                innerFlex.appendChild(textSpan);
+                innerFlex.appendChild(arrowSpan);
+                outerFlex.appendChild(innerFlex);
+                btn.appendChild(outerFlex);
+
+                // Move the panel to <body> so Google's overflow:hidden toolbar
+                // does not clip it. getOrCreateDropdown removes it by ID when
+                // the query changes, so it will not be orphaned on navigation.
+                document.body.appendChild(panel);
+
+                // Hover with a short delay so the gap between button and panel
+                // does not accidentally collapse the menu as the cursor crosses it
+                let hoverTimeout;
+                const showPanel = () => {
+                    clearTimeout(hoverTimeout);
+                    const rect        = btn.getBoundingClientRect();
+                    panel.style.position = 'fixed';
+                    panel.style.top      = (rect.bottom + 4) + 'px';
+                    panel.style.left     = rect.left + 'px';
+                    panel.style.display  = 'block';
+                    btn.setAttribute('aria-expanded', 'true');
+                };
+                const hidePanel = () => {
+                    hoverTimeout = setTimeout(() => {
+                        panel.style.display = 'none';
+                        btn.setAttribute('aria-expanded', 'false');
+                    }, 100);
+                };
+
+                wrapper.addEventListener('mouseenter', showPanel);
+                panel.addEventListener('mouseenter',   showPanel);
+                wrapper.addEventListener('mouseleave', hidePanel);
+                panel.addEventListener('mouseleave',   hidePanel);
+
+                // Insert after Tools button, with a fallback selector chain
+                const toolsBtn = document.getElementById('hdtb-tls');
+                if (toolsBtn) {
+                    toolsBtn.parentElement.after(node);
+                } else {
+                    const fallback = document.querySelector('#hdtb-msb-vis') ||
+                                     document.querySelector('.hdtb-mitem');
+                    if (fallback) fallback.after(node);
+                }
+            },
+        },
+
+        {
+            name:      'Bing',
+            hostMatch: (h) => h.endsWith('bing.com'),
+            css: `
+                .dropbtn {
+                    background-color: #fff !important;
+                    font-family: Arial, Helvetica, sans-serif;
+                    color: #444;
+                    font-size: 11px !important;
+                    line-height: 30px !important;
+                    text-transform: uppercase;
+                }
+                .dropdown:hover .dropbtn { background-color: #3e8e41; }
+
+                #${BING_BOTTOM_ID} {
+                    width: 1000px;
+                    font-size: small;
+                    margin: 10px 10px 5px 159px;
+                }
+                #${BING_BOTTOM_ID} a {
+                    color: #0078d4;
+                    text-decoration: none;
+                    margin-right: 6px;
+                }
+                #${BING_BOTTOM_ID} a:hover { text-decoration: underline; }
+            `,
+            inject: (query) => {
+                // --- Scope bar dropdown ---
+                const { node, isNew } = getOrCreateDropdown(query);
+                if (isNew) {
+                    const anchor = document.querySelector('.b_scopebar li:nth-child(6)');
+                    if (anchor) anchor.after(node);
+                }
+
+                // --- Bottom "try on" bar ---
+                // Remove and rebuild if the query has changed since last render
+                let bottomBar = document.getElementById(BING_BOTTOM_ID);
+                if (bottomBar && bottomBar.dataset.query !== query) {
+                    bottomBar.remove();
+                    bottomBar = null;
+                }
+
+                if (!bottomBar) {
+                    const pag = document.querySelector('.b_pag');
+                    if (!pag) return;
+
+                    bottomBar = document.createElement('div');
+                    bottomBar.id            = BING_BOTTOM_ID;
+                    bottomBar.dataset.query = query;
+
+                    bottomBar.appendChild(document.createTextNode('Try this search on '));
+
+                    // Build link nodes as DOM elements — avoids innerHTML and keeps
+                    // construction consistent with the rest of the script
+                    const links = getAltSearchLinks(query);
+                    buildLinkNodes(links).forEach((a, i) => {
+                        bottomBar.appendChild(a);
+                        if (i < links.length - 1) {
+                            bottomBar.appendChild(document.createTextNode(', '));
+                        }
+                    });
+
+                    pag.before(bottomBar);
+                }
+            },
+        },
+
+        {
+            name:      'DuckDuckGo',
+            hostMatch: (h) => h.endsWith('duckduckgo.com'),
+            css: `
+                .zcm-wrap { position: static !important; }
+                li { list-style-type: none; }
+                .dropbtn {
+                    font-size: 14.4px; color: #666; background-color: #fafafa;
+                    font-family: inherit; line-height: 37px; font-weight: 600; height: 37px;
+                }
+                .dropbtn:hover { color: #333; }
+                .dropdown { position: static !important; }
+            `,
+            inject: (query) => {
+                const { node, isNew } = getOrCreateDropdown(query);
+                if (!isNew) return;
+                // DDG has renamed its bar element across versions; try both
+                const anchor = document.querySelector('#duckbar_new') ||
+                               document.querySelector('#react-duckbar nav');
+                if (anchor) anchor.append(node);
+            },
+        },
+
+        {
+            name:      'Swagbucks',
+            hostMatch: (h) => h.endsWith('swagbucks.com'),
+            css: `
+                .dropbtn {
+                    background-color: #fff !important; color: #666;
+                    font-family: 'Open Sans', sans-serif; font-size: 1.4em;
+                }
+                .dropdown-content a { display: block !important; }
+                .dropdown:hover .dropbtn { color: #2d6cae; }
+            `,
+            inject: (query) => {
+                const { node, isNew } = getOrCreateDropdown(query);
+                if (!isNew) return;
+                const anchor = document.querySelector('#tab_n');
+                if (anchor) anchor.after(node);
+            },
+        },
+    ];
+
+    // -------------------------------------------------------------------------
+    // Bootstrap — find config, attach observer, run initial injection
+    // -------------------------------------------------------------------------
+
+    const host   = window.location.hostname;
+    const config = SITE_CONFIGS.find(cfg => cfg.hostMatch(host));
+
+    if (!config) {
+        console.log('AltSearch: unsupported host:', host);
+        return;
+    }
+
+    if (config.css) {
+        addGlobalStyle(config.css, `altsearch-${config.name.toLowerCase()}-styles`);
+    }
+
+    const runInjection = () => {
+        const query = extractSearchQuery();
+        if (!query) return;
+        try {
+            config.inject(query);
+        } catch (err) {
+            console.error(`AltSearch ${config.name} inject error:`, err);
+        }
+    };
+
+    // Single shared observer — debounced so rapid DOM churn (React renders,
+    // lazy-loaded images, etc.) collapses into one callback per 150 ms
+    const observer = new MutationObserver(debounce(runInjection, 150));
+
+    function initObserver() {
+        // Always observe document.body so SPA navigations are caught regardless
+        // of which child element happens to change
+        observer.observe(document.body, { childList: true, subtree: true });
+        runInjection();
+    }
+
+    // Defer until the DOM is interactive if the script runs early;
+    // otherwise fire immediately (document-idle makes this the common case)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initObserver);
+    } else {
+        initObserver();
+    }
+
+})();
