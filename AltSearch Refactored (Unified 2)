@@ -219,6 +219,42 @@
         return { node: container, wrapper, btn, panel, isNew: true };
     }
 
+    /**
+     * Move a dropdown panel to <body> and pin it under its button with
+     * position:fixed. This escapes both overflow:hidden clipping and any
+     * stacking context the host page builds around its toolbar. Inside such
+     * a context, no z-index on the panel can lift it above the page content.
+     */
+    function portalPanel(wrapper, btn, panel) {
+        document.body.appendChild(panel);
+        panel.style.position = 'fixed';
+        panel.style.zIndex   = '2147483647';
+
+        // Short hide delay so crossing the gap between button and panel
+        // does not collapse the menu
+        let hoverTimeout;
+        const showPanel = () => {
+            clearTimeout(hoverTimeout);
+            const rect = btn.getBoundingClientRect();
+            panel.style.top     = (rect.bottom + 4) + 'px';
+            panel.style.left    = rect.left + 'px';
+            panel.style.display = 'block';
+            btn.setAttribute('aria-expanded', 'true');
+        };
+        const hidePanel = () => {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = setTimeout(() => {
+                panel.style.display = 'none';
+                btn.setAttribute('aria-expanded', 'false');
+            }, 100);
+        };
+
+        wrapper.addEventListener('mouseenter', showPanel);
+        panel.addEventListener('mouseenter',   showPanel);
+        wrapper.addEventListener('mouseleave', hidePanel);
+        panel.addEventListener('mouseleave',   hidePanel);
+    }
+
     // -------------------------------------------------------------------------
     // Site configurations
     // -------------------------------------------------------------------------
@@ -303,33 +339,8 @@
                 btn.appendChild(outerFlex);
 
                 // Move the panel to <body> so Google's overflow:hidden toolbar
-                // does not clip it. getOrCreateDropdown removes it by ID when
-                // the query changes, so it will not be orphaned on navigation.
-                document.body.appendChild(panel);
-
-                // Hover with a short delay so the gap between button and panel
-                // does not accidentally collapse the menu as the cursor crosses it
-                let hoverTimeout;
-                const showPanel = () => {
-                    clearTimeout(hoverTimeout);
-                    const rect        = btn.getBoundingClientRect();
-                    panel.style.position = 'fixed';
-                    panel.style.top      = (rect.bottom + 4) + 'px';
-                    panel.style.left     = rect.left + 'px';
-                    panel.style.display  = 'block';
-                    btn.setAttribute('aria-expanded', 'true');
-                };
-                const hidePanel = () => {
-                    hoverTimeout = setTimeout(() => {
-                        panel.style.display = 'none';
-                        btn.setAttribute('aria-expanded', 'false');
-                    }, 100);
-                };
-
-                wrapper.addEventListener('mouseenter', showPanel);
-                panel.addEventListener('mouseenter',   showPanel);
-                wrapper.addEventListener('mouseleave', hidePanel);
-                panel.addEventListener('mouseleave',   hidePanel);
+                // does not clip it
+                portalPanel(wrapper, btn, panel);
 
                 // Insert after Tools button, with a fallback selector chain
                 const toolsBtn = document.getElementById('hdtb-tls');
@@ -371,10 +382,15 @@
             `,
             inject: (query) => {
                 // --- Scope bar dropdown ---
-                const { node, isNew } = getOrCreateDropdown(query);
+                const { node, wrapper, btn, panel, isNew } = getOrCreateDropdown(query);
                 if (isNew) {
                     const anchor = document.querySelector('.b_scopebar li:nth-child(6)');
-                    if (anchor) anchor.after(node);
+                    if (anchor) {
+                        anchor.after(node);
+                        // Bing's header is its own stacking context, so the panel
+                        // must live outside it to render above the results
+                        portalPanel(wrapper, btn, panel);
+                    }
                 }
 
                 // --- Bottom "try on" bar ---
