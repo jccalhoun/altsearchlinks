@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         AltSearch Refactored (Unified + Original Styles + CSP/A11y Safe 2)
+// @name         AltSearch Links
 // @namespace    https://greasyfork.org/users/9631
 // @version      3.4.0
 // @description  Performs search on other sites (Google, Google Scholar, Bing, DuckDuckGo, Swagbucks). SPA-aware, unified observer, with original styling.
