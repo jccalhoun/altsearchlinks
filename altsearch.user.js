@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         AltSearch Refactored (Unified + Original Styles + CSP/A11y Safe 2)
+// @name         AltSearch Links
 // @namespace    https://greasyfork.org/users/9631
-// @version      3.3.0
-// @description  Performs search on other sites. SPA-aware, unified observer, with original styling.
+// @version      3.4.0
+// @description  Performs search on other sites (Google, Google Scholar, Bing, DuckDuckGo, Swagbucks). SPA-aware, unified observer, with original styling.
 // @author       jccalhoun & Gemini & Claude
 // @match        *://*.bing.com/*
 // @match        *://*.duckduckgo.com/*
@@ -86,10 +86,18 @@
             { name: 'Reddit',         url: `https://www.reddit.com/search?q=${enc}`,                        domain: 'reddit.com'         },
             { name: 'GitHub',         url: `https://github.com/search?q=${enc}`,                            domain: 'github.com'         },
             { name: 'Mojeek',         url: `https://www.mojeek.com/search?q=${enc}`,                        domain: 'mojeek.com'         },
-            { name: 'Karma',          url: `https://karmasearch.org/search?q=${enc}`,                       domain: 'karmasearch.com'    },
+            { name: 'Karma',          url: `https://karmasearch.org/search?q=${enc}`,                       domain: 'karmasearch.org'    },
         ];
 
-        return all.filter(link => !host.endsWith(link.domain));
+        // Hide only the engine whose domain matches the current host most
+        // specifically. On scholar.google.com both 'google.com' and
+        // 'scholar.google.com' match, but only Scholar should be hidden.
+        const matchesHost = (d) => host === d || host.endsWith('.' + d);
+        const current = all
+            .filter(link => matchesHost(link.domain))
+            .sort((a, b) => b.domain.length - a.domain.length)[0];
+
+        return all.filter(link => link !== current);
     }
 
     /**
@@ -219,6 +227,42 @@
         return { node: container, wrapper, btn, panel, isNew: true };
     }
 
+    /**
+     * Move a dropdown panel to <body> and pin it under its button with
+     * position:fixed. This escapes both overflow:hidden clipping and any
+     * stacking context the host page builds around its toolbar. Inside such
+     * a context, no z-index on the panel can lift it above the page content.
+     */
+    function portalPanel(wrapper, btn, panel) {
+        document.body.appendChild(panel);
+        panel.style.position = 'fixed';
+        panel.style.zIndex   = '2147483647';
+
+        // Short hide delay so crossing the gap between button and panel
+        // does not collapse the menu
+        let hoverTimeout;
+        const showPanel = () => {
+            clearTimeout(hoverTimeout);
+            const rect = btn.getBoundingClientRect();
+            panel.style.top     = (rect.bottom + 4) + 'px';
+            panel.style.left    = rect.left + 'px';
+            panel.style.display = 'block';
+            btn.setAttribute('aria-expanded', 'true');
+        };
+        const hidePanel = () => {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = setTimeout(() => {
+                panel.style.display = 'none';
+                btn.setAttribute('aria-expanded', 'false');
+            }, 100);
+        };
+
+        wrapper.addEventListener('mouseenter', showPanel);
+        panel.addEventListener('mouseenter',   showPanel);
+        wrapper.addEventListener('mouseleave', hidePanel);
+        panel.addEventListener('mouseleave',   hidePanel);
+    }
+
     // -------------------------------------------------------------------------
     // Site configurations
     // -------------------------------------------------------------------------
@@ -303,33 +347,8 @@
                 btn.appendChild(outerFlex);
 
                 // Move the panel to <body> so Google's overflow:hidden toolbar
-                // does not clip it. getOrCreateDropdown removes it by ID when
-                // the query changes, so it will not be orphaned on navigation.
-                document.body.appendChild(panel);
-
-                // Hover with a short delay so the gap between button and panel
-                // does not accidentally collapse the menu as the cursor crosses it
-                let hoverTimeout;
-                const showPanel = () => {
-                    clearTimeout(hoverTimeout);
-                    const rect        = btn.getBoundingClientRect();
-                    panel.style.position = 'fixed';
-                    panel.style.top      = (rect.bottom + 4) + 'px';
-                    panel.style.left     = rect.left + 'px';
-                    panel.style.display  = 'block';
-                    btn.setAttribute('aria-expanded', 'true');
-                };
-                const hidePanel = () => {
-                    hoverTimeout = setTimeout(() => {
-                        panel.style.display = 'none';
-                        btn.setAttribute('aria-expanded', 'false');
-                    }, 100);
-                };
-
-                wrapper.addEventListener('mouseenter', showPanel);
-                panel.addEventListener('mouseenter',   showPanel);
-                wrapper.addEventListener('mouseleave', hidePanel);
-                panel.addEventListener('mouseleave',   hidePanel);
+                // does not clip it
+                portalPanel(wrapper, btn, panel);
 
                 // Insert after Tools button, with a fallback selector chain
                 const toolsBtn = document.getElementById('hdtb-tls');
@@ -371,10 +390,15 @@
             `,
             inject: (query) => {
                 // --- Scope bar dropdown ---
-                const { node, isNew } = getOrCreateDropdown(query);
+                const { node, wrapper, btn, panel, isNew } = getOrCreateDropdown(query);
                 if (isNew) {
                     const anchor = document.querySelector('.b_scopebar li:nth-child(6)');
-                    if (anchor) anchor.after(node);
+                    if (anchor) {
+                        anchor.after(node);
+                        // Bing's header is its own stacking context, so the panel
+                        // must live outside it to render above the results
+                        portalPanel(wrapper, btn, panel);
+                    }
                 }
 
                 // --- Bottom "try on" bar ---
@@ -407,6 +431,56 @@
 
                     pag.before(bottomBar);
                 }
+            },
+        },
+
+        {
+            name:      'Google Scholar',
+            hostMatch: (h) => h === 'scholar.google.com',
+            css: `
+                #${CONTAINER_ID} {
+                    display: inline-block;
+                    vertical-align: middle;
+                    list-style: none;
+                    margin-left: 8px;
+                }
+                #${CONTAINER_ID} .dropbtn {
+                    padding: 6px 12px;
+                    font-family: Arial, sans-serif;
+                    font-size: 13px;
+                    color: #4285f4;
+                    background-color: #f8f9fa;
+                    border: 1px solid #dadce0;
+                    border-radius: 4px;
+                }
+                #${CONTAINER_ID} .dropbtn:hover { background-color: #f1f3f4; }
+                #${DROPDOWN_CONTENT_ID} {
+                    border: 1px solid #dadce0;
+                    border-radius: 4px;
+                    min-width: 160px;
+                    padding: 4px 0;
+                }
+                #${DROPDOWN_CONTENT_ID} a {
+                    padding: 8px 16px !important;
+                    font-family: Arial, sans-serif;
+                    font-size: 13px;
+                    color: #222;
+                }
+            `,
+            inject: (query) => {
+                const { node, wrapper, btn, panel, isNew } = getOrCreateDropdown(query);
+                if (!isNew) return;
+
+                // Next to the "About N results" text; fall back to the end
+                // of the results bar if Scholar renames that element
+                const bar = document.getElementById('gs_ab_md');
+                if (!bar) return;
+                const anchor = bar.querySelector('.gs_ab_mdw');
+                if (anchor) anchor.after(node);
+                else bar.append(node);
+
+                // The results bar clips overflow, so the panel lives in <body>
+                portalPanel(wrapper, btn, panel);
             },
         },
 
